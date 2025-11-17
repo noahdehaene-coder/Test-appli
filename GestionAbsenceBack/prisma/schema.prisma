@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  name     String
+  role     UserRole
+  slots    slot[]
+}
+
+
+enum UserRole {
+  GESTIONNAIRE
+  PROFESSEUR
+}
+
+
+model student {
+  id                  Int           @id @default(autoincrement())
+  student_number      String
+  name                String
+  student_inscription inscription[]
+  student_presence    presence[]
+}
+
+model inscription {
+  student_id        Int
+  group_id          Int
+  inscription_student student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  inscription_group group   @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, group_id])
+}
+
+model group {
+  id                Int           @id @default(autoincrement())
+  name              String
+  semester_id       Int
+  group_semester    semester      @relation(fields: [semester_id], references: [id], onDelete: Cascade)
+  group_inscription inscription[]
+  group_slot        slot[]
+}
+
+model semester {
+  id                       Int                 @id @default(autoincrement())
+  name                     String              @unique
+  semester_group           group[]
+  semester_course_material course_material[]
+}
+
+model course_material {
+  id                           Int            @id @default(autoincrement())
+  name                         String         @unique
+  semester_id                  Int
+  course_material_semester     semester       @relation(fields: [semester_id], references: [id], onDelete: Cascade)
+  course_material_session_type session_type[]
+}
+
+model session_type {
+  id                 Int               @id @default(autoincrement())
+  course_material_id   Int
+  sessionTypeGlobalId Int
+  session_type_course_material course_material @relation(fields: [course_material_id], references: [id], onDelete: Cascade)
+  sessionTypeGlobal            SessionTypeGlobal @relation(fields: [sessionTypeGlobalId], references: [id])
+  session_type_slot            slot[]
+  @@unique([sessionTypeGlobalId, course_material_id])
+}
+
+model SessionTypeGlobal {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  session_type session_type[]
+}
+
+model presence {
+  student_id     Int
+  slot_id        Int
+  presence_student student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  presence_slot    slot    @relation(fields: [slot_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, slot_id])
+}
+
+model slot {
+  id                Int          @id @default(autoincrement())
+  date              DateTime
+  presence_slot     presence[]
+  group_id          Int
+  slot_group        group        @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  session_type_id   Int
+  slot_session_type session_type @relation(fields: [session_type_id], references: [id], onDelete: Cascade)
+
+  // +++++++++++++ MODIFICATION +++++++++++++
+  // Lier le créneau au professeur qui le crée
+  professorId       Int
+  professor         User         @relation(fields: [professorId], references: [id])
+
+  // Mettre à jour la contrainte d'unicité
+  @@unique([date, session_type_id, group_id, professorId])
+  // ++++++++++++++++++++++++++++++++++++++++
+}
+
+
+
+

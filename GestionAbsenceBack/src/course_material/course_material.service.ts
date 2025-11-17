@@ -1,0 +1,106 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
+import { Prisma, course_material } from '@prisma/client';
+import { CreateCourseMaterialDto } from './dto/create-course_material.dto';
+
+@Injectable()
+export class CourseMaterialService {
+  constructor(private prisma: PrismaService) {}
+
+  async get(
+    id: Prisma.course_materialWhereUniqueInput,
+  ): Promise<course_material | null> {
+    return this.prisma.course_material.findUnique({
+      where: id,
+    });
+  }
+
+  async getAll(): Promise<course_material[]> {
+    return this.prisma.course_material.findMany();
+  }
+
+  async getByStudentId(studentId: number) {
+    const absences = await this.prisma.presence.findMany({
+      where: {
+        student_id: studentId,
+      },
+      include: {
+        presence_slot: {
+          select: {
+            slot_session_type: {
+              select: {
+                session_type_course_material: true,
+                sessionTypeGlobal: {
+                  select: { name: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const simplified = absences.map((presence) => ({
+      courseName:
+        presence.presence_slot.slot_session_type.session_type_course_material
+          .name,
+      courseType:
+        presence.presence_slot.slot_session_type.sessionTypeGlobal.name,
+    }));
+
+    return simplified.filter(
+      (value, index, self) =>
+        index ===
+        self.findIndex(
+          (t) =>
+            t.courseName === value.courseName &&
+            t.courseType === value.courseType,
+        ),
+    );
+  }
+
+  async getBySemesterId(semesterId: number): Promise<course_material[]> {
+    return this.prisma.course_material.findMany({
+      where: {
+        semester_id: semesterId,
+      },
+    });
+  }
+
+  async post(data: CreateCourseMaterialDto): Promise<course_material> {
+    const { name, semester_id } = data;
+    
+    return this.prisma.course_material.create({
+      data: {
+        name: name,
+        course_material_semester: {
+          connect: {
+            id: semester_id,
+          },
+        },
+      },
+    });
+  }
+
+  async update(
+    id: Prisma.course_materialWhereUniqueInput,
+    data: Prisma.course_materialUpdateInput,
+  ): Promise<course_material> {
+    return this.prisma.course_material.update({
+      where: id,
+      data,
+    });
+  }
+
+  async delete(
+    id: Prisma.course_materialWhereUniqueInput,
+  ): Promise<course_material> {
+    return this.prisma.course_material.delete({
+      where: id,
+    });
+  }
+
+  async deleteMany() {
+    return this.prisma.course_material.deleteMany();
+  }
+}

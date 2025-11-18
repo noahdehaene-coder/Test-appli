@@ -47,7 +47,6 @@ export class CourseMaterialService {
     });
 
     const simplified = absences.map((presence) => ({
-      // L'ID est maintenant accessible sans erreur
       id: presence.presence_slot.slot_session_type.session_type_course_material.id, 
       name:
         presence.presence_slot.slot_session_type.session_type_course_material
@@ -61,8 +60,7 @@ export class CourseMaterialService {
         index ===
         self.findIndex(
           (t) =>
-            t.name === value.name &&
-            t.type === value.type,
+            t.id === value.id,
         ),
     );
   }

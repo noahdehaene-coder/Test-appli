@@ -1,4 +1,3 @@
-<!--Page de récapitulatif des absences par étudiant.e-->
 <template>
   <main class="left" v-if="student">
     <h1>Récapitulatif des absences de {{ student.name }}</h1>
@@ -6,28 +5,24 @@
     <div class="sections-container">
 
       <div class="section" id="left-section">
-        <!-- Afficher les absences de l'étudiant -->
         <h2>Absences :</h2>
-        <!-- Bouton pour voir toutes les absences sans filtre -->
         <button @click="showAllAbsences" class="button" id="show-all-absences-btn">
           Voir toutes les absences
         </button>
 
-        <!-- Bouton pour exporter les données de l'étudiant -->
         <button v-if="filteredAbsences.length > 0" @click="exportStudentData" class="button" id="export-absences-btn">
           Exporter les absences de l'étudiant.e
         </button>
 
         <ul v-if="filteredAbsences.length > 0" class="list" id="absences-list">
           <li v-for="absence in filteredAbsences" :key="absence.courseId + absence.date">
-            <strong>{{ absence.courseName }}</strong> : {{ formatDate(absence.date) }}
+            <strong>{{ absence.courseName }} ({{ absence.courseType }})</strong> : {{ formatDate(absence.date) }}
           </li>
         </ul>
         <p v-else>Aucune absence trouvée pour cette sélection.</p>
       </div>
 
       <div class="section" id="right-section">
-        <!-- Sélectionner une matière -->
         <h2>Sélectionner une ou plusieurs matière.s</h2>
         <div class="search-container">
           <SearchIcon class="search-icon" />
@@ -41,7 +36,17 @@
             </div>
           </li>
         </ul>
-      </div>
+
+        <h2 style="margin-top: 1.5rem;">Sélectionner un ou plusieurs type.s de session</h2>
+        <ul class="list-courses">
+          <li v-for="type in uniqueSessionTypes" :key="type" :value="type">
+            <div class="list-container">
+              <input type="checkbox" class="checkbox-course" :value="type" v-model="selectedSessionTypes">
+              <label :for="type">{{ type }}</label>
+            </div>
+          </li>
+        </ul>
+        </div>
     </div>
   </main>
 </template>
@@ -56,19 +61,30 @@ import { getStudentAbsencesById } from '@/shared/fetchers/presence';
 import { getCoursesByStudent } from '@/shared/fetchers/course_material';
 
 const route = useRoute();
-const studentId = Number(route.params.id); // Récupérer le num de l'étudiant sélectionné à partir des paramètres de la route
+const studentId = Number(route.params.id); 
 const student = ref(null);
 
-const selectedCourses = ref([])  // Liste matières sélectionnées
-const absencesList = ref([]) // Liste des absences
-const courses = ref([]) // Liste des matières
+const selectedCourses = ref([])
+const selectedSessionTypes = ref([])
+const absencesList = ref([]) 
+const courses = ref([])
 
-// Charger les données des absences et des matières
 onMounted(async () => {
   student.value = await getStudentById(studentId);
   absencesList.value = await getStudentAbsencesById(studentId) || [];
   courses.value = await getCoursesByStudent(studentId) || [];
 })
+
+const uniqueSessionTypes = computed(() => {
+  const types = new Set();
+  absencesList.value.forEach(absence => {
+    if (absence.courseType) { 
+      types.add(absence.courseType);
+    }
+  });
+  return Array.from(types);
+});
+
 
 function formatDate(date) {
   const dateFormat = new Date(date);
@@ -85,21 +101,26 @@ const filteredCourses = computed(() =>
     c.name.toLowerCase().includes(searchQueryCourse.value.toLowerCase())
   ));
 
-// Filtrer les absences de l'étudiant pour les matières sélectionnées
 const filteredAbsences = computed(() => {
-  if (!student.value) return [] // Vérifier que student est chargé
+  if (!student.value) return []
+
+  const courseFilterActive = selectedCourses.value.length > 0;
+  const typeFilterActive = selectedSessionTypes.value.length > 0;
 
   return absencesList.value.filter(absence => {
-    return selectedCourses.value.length === 0 || selectedCourses.value.includes(absence.courseId);
+    const matchesCourse = !courseFilterActive || selectedCourses.value.includes(absence.courseId);
+    
+    const matchesType = !typeFilterActive || selectedSessionTypes.value.includes(absence.courseType); 
+
+    return matchesCourse && matchesType;
   })
 })
 
-// Fonction pour afficher toutes les absences
 function showAllAbsences() {
   selectedCourses.value = [];
+  selectedSessionTypes.value = [];
 }
 
-// Fonction pour exporter les données en csv
 function exportStudentData() {
   const headers = ['Matière', 'Type de séance', 'Date de l\'absence']
   const rows = absencesList.value.map(absence => [
@@ -108,7 +129,6 @@ function exportStudentData() {
     formatDate(absence.date)
   ])
 
-  // Regroupement des absences pas matière et par type de séance pour avoir les totaux
   const absenceCountByCourseType = {};
   absencesList.value.forEach(abs => {
     const key = `${abs.courseName}|||${abs.courseType}`;
@@ -124,20 +144,18 @@ function exportStudentData() {
     return [courseName, courseType, count];
   });
 
-  // Création du fichier CSV
   let csvContent = "data:text/csv;charset=utf-8,"
     + headers.join(",") + "\n"
     + rows.map(row => row.join(",")).join("\n")
     + "\n\n" + totalHeader.join(",") + "\n"
     + totals.map(row => row.join(",")).join("\n");
 
-  // Création d'un lien pour télécharger le fichier CSV
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
   link.setAttribute("download", `${student.value?.name.replace(/\s+/g, '_')}_absences.csv`);
   document.body.appendChild(link);
-  link.click();  // Simule un clic pour déclencher le téléchargement
+  link.click();
 }
 </script>
 

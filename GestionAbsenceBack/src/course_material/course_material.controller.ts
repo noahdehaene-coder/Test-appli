@@ -42,6 +42,13 @@ export class CourseMaterialController {
     return this.courseMaterialService.getBySemesterId(semesterId);
   }
 
+  @Get('presence/student/:id')
+  @ApiOperation({ summary: 'Récupérer toutes les absences d\'un étudiant' })
+  @ApiParam({ name: 'id', type: Number })
+  getAbsencesByStudent(@Param('id', ParseIntPipe) id: number) {
+    return this.courseMaterialService.getAbsencesByStudent(id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer une matière par ID' })
   @ApiParam({ name: 'id', type: Number })

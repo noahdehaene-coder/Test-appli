@@ -19,7 +19,7 @@
         </button>
 
         <ul v-if="filteredAbsences.length > 0" class="list" id="absences-list">
-          <li v-for="absence in filteredAbsences" :key="absence.student.id + absence.date">
+          <li v-for="absence in filteredAbsences" :key="absence.courseId + absence.date">
             <strong>{{ absence.courseName }}</strong> : {{ formatDate(absence.date) }}
           </li>
         </ul>
@@ -56,7 +56,7 @@ import { getStudentAbsencesById } from '@/shared/fetchers/presence';
 import { getCoursesByStudent } from '@/shared/fetchers/course_material';
 
 const route = useRoute();
-const studentId = Number(route.params.studentId); // Récupérer le num de l'étudiant sélectionné à partir des paramètres de la route
+const studentId = Number(route.params.id); // Récupérer le num de l'étudiant sélectionné à partir des paramètres de la route
 const student = ref(null);
 
 const selectedCourses = ref([])  // Liste matières sélectionnées
@@ -66,8 +66,8 @@ const courses = ref([]) // Liste des matières
 // Charger les données des absences et des matières
 onMounted(async () => {
   student.value = await getStudentById(studentId);
-  absencesList.value = await getStudentAbsencesById(studentId);
-  courses.value = await getCoursesByStudent(studentId);
+  absencesList.value = await getStudentAbsencesById(studentId) || [];
+  courses.value = await getCoursesByStudent(studentId) || [];
 })
 
 function formatDate(date) {

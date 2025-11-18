@@ -35,10 +35,17 @@ export async function getCoursesByStudent(studentId) {
             method: 'GET',
             headers: getAuthHeader() // Sécurisation
         });
+
+        if (!response.ok) {
+            console.error(`Erreur HTTP ${response.status} lors de la récupération des cours`);
+            return [];
+        }
+
         const data = await response.json();
         return data;
     } catch (error) {
         console.error('Erreur de chargement des matières du semestre de l\'étudiant:', error);
+        return [];
     }
 }
 

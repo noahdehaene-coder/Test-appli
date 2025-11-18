@@ -19,7 +19,7 @@ export class CourseMaterialService {
     return this.prisma.course_material.findMany();
   }
 
-  async getByStudentId(studentId: number) {
+ async getByStudentId(studentId: number) {
     const absences = await this.prisma.presence.findMany({
       where: {
         student_id: studentId,
@@ -29,9 +29,15 @@ export class CourseMaterialService {
           select: {
             slot_session_type: {
               select: {
-                session_type_course_material: true,
                 sessionTypeGlobal: {
                   select: { name: true },
+                },
+                // CORRECTION: Rendre le select explicite pour inclure l'ID et le nom
+                session_type_course_material: { 
+                  select: { 
+                    id: true, // <-- Ajouté
+                    name: true,
+                  },
                 },
               },
             },
@@ -41,10 +47,12 @@ export class CourseMaterialService {
     });
 
     const simplified = absences.map((presence) => ({
-      courseName:
+      // L'ID est maintenant accessible sans erreur
+      id: presence.presence_slot.slot_session_type.session_type_course_material.id, 
+      name:
         presence.presence_slot.slot_session_type.session_type_course_material
           .name,
-      courseType:
+      type:
         presence.presence_slot.slot_session_type.sessionTypeGlobal.name,
     }));
 
@@ -53,10 +61,44 @@ export class CourseMaterialService {
         index ===
         self.findIndex(
           (t) =>
-            t.courseName === value.courseName &&
-            t.courseType === value.courseType,
+            t.name === value.name &&
+            t.type === value.type,
         ),
     );
+  }
+
+  // Fonction pour l'endpoint /course_material/presence/student/:id
+  async getAbsencesByStudent(studentId: number) {
+    const absences = await this.prisma.presence.findMany({
+      where: { student_id: studentId },
+      include: {
+        presence_slot: {
+          select: {
+            date: true,
+            slot_session_type: {
+              select: {
+                sessionTypeGlobal: { select: { name: true } },
+                // CORRECTION: Rendre le select explicite pour inclure l'ID et le nom
+                session_type_course_material: { 
+                    select: { 
+                        id: true, // <-- Ajouté
+                        name: true 
+                    } 
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return absences.map((a) => ({
+      courseName: a.presence_slot.slot_session_type.session_type_course_material.name,
+      courseType: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
+      date: a.presence_slot.date,
+      // L'ID est maintenant accessible sans erreur
+      courseId: a.presence_slot.slot_session_type.session_type_course_material.id, 
+    }));
   }
 
   async getBySemesterId(semesterId: number): Promise<course_material[]> {

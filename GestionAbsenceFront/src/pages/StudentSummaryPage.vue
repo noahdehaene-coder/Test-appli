@@ -122,7 +122,7 @@ function showAllAbsences() {
 }
 
 function exportStudentData() {
-  const headers = ['Matière', 'Type de séance', 'Date de l\'absence']
+  const headers = ['Matiere', 'Type de seance', 'Date de l\'absence']
   const rows = absencesList.value.map(absence => [
     absence.courseName,
     absence.courseType,
@@ -138,17 +138,17 @@ function exportStudentData() {
     absenceCountByCourseType[key]++;
   });
 
-  const totalHeader = ['Matière', 'Type de séance', 'Nombre total d\'absences de l\étudiant.e'];
+  const totalHeader = ['Matiere', 'Type de seance', 'Nombre total d\'absence de l\'etudiant'];
   const totals = Object.entries(absenceCountByCourseType).map(([key, count]) => {
     const [courseName, courseType] = key.split('|||');
     return [courseName, courseType, count];
   });
 
   let csvContent = "data:text/csv;charset=utf-8,"
-    + headers.join(",") + "\n"
-    + rows.map(row => row.join(",")).join("\n")
-    + "\n\n" + totalHeader.join(",") + "\n"
-    + totals.map(row => row.join(",")).join("\n");
+    + headers.join(";") + "\n"
+    + rows.map(row => row.join(";")).join("\n")
+    + "\n\n" + totalHeader.join(";") + "\n"
+    + totals.map(row => row.join(";")).join("\n");
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");

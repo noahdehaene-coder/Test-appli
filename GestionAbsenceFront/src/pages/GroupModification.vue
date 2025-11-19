@@ -108,7 +108,7 @@ async function deleteStudent(student) {
   if (!confirmDelete) return;
 
   try {
-    await deleteInscription(student.id, currentGroupId);
+    await deleteInscriptionById(student.id, currentGroupId);
     await loadLists();
   } catch (error) {
     console.error("Erreur lors de la suppression de l'inscription :", error);

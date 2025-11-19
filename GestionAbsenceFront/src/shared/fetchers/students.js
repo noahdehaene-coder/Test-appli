@@ -62,7 +62,7 @@ export async function getStudentsByGroupId(groupId) {
  */
 export async function getStudentsSameOtherGroup(groupId) {
     try {
-        const response = await fetch(`http://localhost:3000/student/by-group-other/${groupId}`, {
+        const response = await fetch(`http://localhost:3000/student/same-other-group/${groupId}`, {
             method: 'GET',
             headers: getAuthHeader()
         });
@@ -73,14 +73,12 @@ export async function getStudentsSameOtherGroup(groupId) {
     }
 }
 
-// +++ CORRECTION DE L'URL (by-course -> by-course_material) +++
 /**
  * Récupère les étudiant.e.s inscrits à une matière (par ID de matière).
  * (Corrige l'erreur de CourseSummaryPage.vue)
  */
 export async function getStudentsByCourseId(courseId) {
     try {
-        // CORRECTION : L'URL est 'by-course_material'
         const response = await fetch(`http://localhost:3000/student/by-course_material/${courseId}`, {
             method: 'GET',
             headers: getAuthHeader()
@@ -91,9 +89,7 @@ export async function getStudentsByCourseId(courseId) {
         console.error("Erreur lors de la récupération des étudiant.e.s par matière : ", error);
     }
 }
-// ALIAS pour CourseSummaryPage.vue
 export const getStudentsBySemesterCourse = getStudentsByCourseId;
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 /**
  * Ajoute une liste d'étudiant.e.s (CSV) pour un semestre donné.

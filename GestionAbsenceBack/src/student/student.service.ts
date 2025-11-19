@@ -45,8 +45,10 @@ export class StudentService {
       .map((group) => group.id);
 
     let studentsInGroups: any[] = [];
+    
     if (similarGroupsIds.length > 0) {
-      studentsInGroups = await this.prisma.inscription.findMany({
+      // Cas 1 : On a trouvé des groupes similaires (ex: TD1 vs TD2)
+      const inscriptions = await this.prisma.inscription.findMany({
         where: {
           group_id: { in: similarGroupsIds },
         },
@@ -55,7 +57,18 @@ export class StudentService {
           inscription_group: true,
         },
       });
+
+      // +++ CORRECTION ICI +++
+      // On transforme la liste d'inscriptions en liste d'étudiants
+      // On ajoute aussi les infos du groupe d'origine car le frontend (GroupModification.vue) les utilise
+      studentsInGroups = inscriptions.map((i) => ({
+        ...i.inscription_student,
+        originalGroupId: i.inscription_group.id,
+        originalGroupName: i.inscription_group.name
+      }));
+      
     } else {
+      // Cas 2 : Pas de groupe similaire, on cherche dans tout le semestre
       const baseGorupStudents = await this.prisma.inscription.findMany({
         where: { group_id: baseGroup.id },
         include: {

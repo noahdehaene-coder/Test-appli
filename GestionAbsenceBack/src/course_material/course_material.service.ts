@@ -32,10 +32,9 @@ export class CourseMaterialService {
                 sessionTypeGlobal: {
                   select: { name: true },
                 },
-                // CORRECTION: Rendre le select explicite pour inclure l'ID et le nom
                 session_type_course_material: { 
                   select: { 
-                    id: true, // <-- Ajouté
+                    id: true,
                     name: true,
                   },
                 },
@@ -65,7 +64,6 @@ export class CourseMaterialService {
     );
   }
 
-  // Fonction pour l'endpoint /course_material/presence/student/:id
   async getAbsencesByStudent(studentId: number) {
     const absences = await this.prisma.presence.findMany({
       where: { student_id: studentId },
@@ -76,10 +74,9 @@ export class CourseMaterialService {
             slot_session_type: {
               select: {
                 sessionTypeGlobal: { select: { name: true } },
-                // CORRECTION: Rendre le select explicite pour inclure l'ID et le nom
                 session_type_course_material: { 
                     select: { 
-                        id: true, // <-- Ajouté
+                        id: true,
                         name: true 
                     } 
                 },
@@ -91,10 +88,10 @@ export class CourseMaterialService {
     });
 
     return absences.map((a) => ({
-      courseName: a.presence_slot.slot_session_type.session_type_course_material.name,
-      courseType: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
+      course_material: a.presence_slot.slot_session_type.session_type_course_material.name,
+      session_type: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
+      
       date: a.presence_slot.date,
-      // L'ID est maintenant accessible sans erreur
       courseId: a.presence_slot.slot_session_type.session_type_course_material.id, 
     }));
   }

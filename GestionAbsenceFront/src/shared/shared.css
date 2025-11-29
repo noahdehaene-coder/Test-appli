@@ -20,9 +20,8 @@ body {
 
 /*Style des pages dont le contenu est positionné à gauche*/
 main.left {
-    margin-left: 3rem;
-    margin-right: 3rem;
     margin-top: 1rem;
+    width: 100%;
 }
 
 /*Style des pages dont le contenu est centré*/

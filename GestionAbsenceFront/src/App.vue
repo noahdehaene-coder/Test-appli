@@ -1,7 +1,11 @@
 <template>
   <NavigationBar />
-  <Breadcrumb :steps="breadcrumbSteps" />
-  <RouterView />
+  
+  <div class="main-layout-container">
+    <Breadcrumb :steps="breadcrumbSteps" />
+    <RouterView />
+  </div>
+  
 </template>
 
 
@@ -100,3 +104,13 @@ const breadcrumbSteps = computed(() => {
   }
 })
 </script>
+
+<style>
+/* Style pour centrer le contenu de toutes les pages */
+.main-layout-container {
+  max-width: 1200px; /* Largeur maximale pour éviter l'étirement sur grands écrans */
+  margin: 0 auto;    /* Centre le bloc horizontalement */
+  padding: 0 2rem;   /* Ajoute un peu d'espace sur les côtés */
+  box-sizing: border-box;
+}
+</style>

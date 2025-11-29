@@ -19,19 +19,18 @@
 </template>
 
 <script setup>
-// Ce composant est principalement un layout,
-// il n'a pas besoin de logique JavaScript complexe.
 </script>
 
 <style scoped>
 @import url('../shared/shared.css');
 
 .admin-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  width: 100%;
+  margin: 2rem 0;
+  padding: 0 2rem;          
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .admin-nav {
@@ -61,9 +60,4 @@
   background-color: var(--color-1, #005a8f);
   color: white;
 }
-
-/*.admin-content {
-   Le contenu (ex: ManageProfessorsPage) aura son propre style,
-     on peut lui mettre un conteneur si besoin. 
-}*/
 </style>

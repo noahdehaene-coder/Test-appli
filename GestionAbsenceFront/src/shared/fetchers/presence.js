@@ -73,6 +73,20 @@ export async function getStudentAbsencesById(id) {
     }
 }
 
+export async function getAbsencesBySlotId(slotId) {
+    try {
+        const response = await fetch(`${API_URL}/presence/slot/${slotId}`, {
+            method: 'GET',
+            headers: getAuthHeader()
+        });
+        if(response.ok) return await response.json();
+        return [];
+    } catch (error) {
+        console.error("Erreur fetch absences", error);
+        return [];
+    }
+}
+
 /**
  * Envoie une liste d’absences pour un créneau donné.
  */
@@ -96,6 +110,20 @@ export async function postAbsence(slotId, idStudents) {
         }
     } catch (error) {
         console.error("Erreur lors de l'envoi des absences :", error);
+    }
+}
+
+export async function updateAbsences(slotId, idStudents) {
+    try {
+        const response = await fetch(`${API_URL}/presence/update/${slotId}`, {
+            method: "PUT",
+            headers: getAuthHeader(),
+            body: JSON.stringify(idStudents)
+        });
+        if (!response.ok) throw new Error("Erreur update absences");
+        return await response.json();
+    } catch (error) {
+        console.error(error);
     }
 }
 

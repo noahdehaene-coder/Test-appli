@@ -14,7 +14,7 @@ export async function getSlots(date) {
     try {
         const response = await fetch(`http://localhost:3000/slot/by-date/${date}`, {
             method: 'GET',
-            headers: getAuthHeader() // Sécurisé
+            headers: getAuthHeader()
         });
         const data = await response.json();
         return data;
@@ -30,7 +30,7 @@ export async function postSlot(groupId, courseName, sessionTypeGlobalId, date) {
     try {
         const response = await fetch(`http://localhost:3000/slot/by-session`, {
             method: "POST",
-            headers: getAuthHeader(), // Sécurisé
+            headers: getAuthHeader(),
             body: JSON.stringify({ 
                 groupId: groupId,
                 courseName: courseName,
@@ -65,7 +65,7 @@ export async function fetchRecentCalls() {
 
     const response = await fetch(`http://localhost:3000/slot/recent-calls`, {
       method: 'GET',
-      headers: getAuthHeader(), // Sécurisé
+      headers: getAuthHeader(),
     });
     if (!response.ok) {
       throw new Error("Erreur lors de la récupération des appels récents");
@@ -77,6 +77,20 @@ export async function fetchRecentCalls() {
   }
 }
 
+export async function fetchSlotsByDate(dateIsoString) {
+    try {
+        const response = await fetch(`http://localhost:3000/slot/my-slots/${dateIsoString}`, {
+            method: 'GET',
+            headers: getAuthHeader()
+        });
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error("Erreur fetch slots date", error);
+        return [];
+    }
+}
+
 /**
  * Supprime tous les créneaux de la table slot.
  */
@@ -84,12 +98,35 @@ export async function deleteSlots() {
     try {
         const response = await fetch(`http://localhost:3000/slot`, {
             method: "DELETE",
-            headers: getAuthHeader() // <-- CORRECTION : Ajout de l'authentification
+            headers: getAuthHeader()
         })
         if (!response.ok) {
             throw new Error("Erreur lors de la suppression des créneaux");
         }
     } catch (error) {
         console.error("Erreur lors de la suppression des créneaux:", error);
+    }
+}
+
+export async function searchSlot(groupId, courseName, sessionTypeGlobalId, date) {
+    try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        
+        const response = await fetch(`${API_URL}/slot/search`, {
+            method: "POST",
+            headers: getAuthHeader(),
+            body: JSON.stringify({ 
+                groupId, courseName, sessionTypeGlobalId, date 
+            })
+        });
+        
+        if (response.ok) {
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
+        }
+        return null;
+    } catch (error) {
+        console.error("Erreur recherche slot :", error);
+        return null;
     }
 }

@@ -47,6 +47,13 @@ export class SlotController {
     return this.slotService.getAllByDate(date);
   }
 
+  @Get('my-slots/:date')
+  @ApiOperation({ summary: 'Récupérer les créneaux du professeur connecté pour une date donnée' })
+  async getMySlots(@Req() req: any, @Param('date') date: string) {
+    const professorId = Number(req.user?.id);
+    return this.slotService.findByProfessorAndDate(professorId, date);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Créer un créneau' })
   @ApiResponse({ status: 201, description: 'Créneau créé avec succès' })
@@ -60,6 +67,13 @@ export class SlotController {
   async postBySession(@Body() createSlotBySessionDto: CreateSlotBySessionDto, @Req() req: any,) {
     const professorId = req.user.id;
     return this.slotService.postBySessionName(createSlotBySessionDto, professorId);
+  }
+
+  @Post('search')
+  @ApiOperation({ summary: 'Chercher un créneau sans le créer' })
+  async search(@Body() dto: CreateSlotBySessionDto, @Req() req: any) {
+    const professorId = req.user.id;
+    return this.slotService.findBySessionName(dto, professorId);
   }
 
   @Put(':id')

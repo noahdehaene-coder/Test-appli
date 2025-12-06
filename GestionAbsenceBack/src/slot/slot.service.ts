@@ -52,6 +52,32 @@ export class SlotService {
     });
   }
 
+  async findByProfessorAndDate(professorId: number, dateString: string) {
+    const startDate = new Date(dateString);
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date(dateString);
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    return this.prisma.slot.findMany({
+      where: {
+        professorId: professorId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        slot_group: { select: { name: true, id: true } },
+        slot_session_type: {
+            include: {
+                sessionTypeGlobal: { select: { name: true, id: true } },
+                session_type_course_material: { select: { name: true } }
+            }
+        }
+      }
+    });
+  }
+
   async postBySessionName(data: CreateSlotBySessionDto, professorId: number) {
     const { groupId, courseName, sessionTypeGlobalId, date } = data; 
 
@@ -202,5 +228,44 @@ export class SlotService {
 
   async deleteMany(): Promise<Prisma.BatchPayload> {
     return this.prisma.slot.deleteMany();
+  }
+
+  async findBySessionName(data: CreateSlotBySessionDto, professorId: number) {
+    const { groupId, courseName, sessionTypeGlobalId, date } = data;
+
+    let isoDate: Date;
+    if (date.includes('/')) {
+      const parts = date.split('/');
+      isoDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    } else {
+      isoDate = new Date(date);
+    }
+
+    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    if (!group) return null;
+
+    const course = await this.prisma.course_material.findUnique({ where: { name: courseName } });
+    if (!course) return null;
+
+    const sessionType = await this.prisma.session_type.findUnique({
+      where: {
+        sessionTypeGlobalId_course_material_id: {
+          sessionTypeGlobalId: sessionTypeGlobalId,
+          course_material_id: course.id,
+        },
+      },
+    });
+    if (!sessionType) return null;
+
+    return this.prisma.slot.findUnique({
+      where: {
+        date_session_type_id_group_id_professorId: {
+          date: isoDate,
+          session_type_id: sessionType.id,
+          group_id: groupId,
+          professorId: professorId,
+        },
+      },
+    });
   }
 }

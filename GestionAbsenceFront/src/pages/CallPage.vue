@@ -24,31 +24,6 @@
                 </li>
             </ul>
         </div>
-
-        <!-- Cette section est utile pour la gestion des absences des étudiant.e.s extérieur.e.s au groupe sélectionné-->
-        <!-- Elle n'est pas utilisée suite au modification de la base de données au S6 du projet (cf. rapport et documentation)
-             Dans le script, tout ce qui est nécessaire pour cette section sera aussi en commentaire.
-             
-            <div v-if="groupNumber !== null" class="section">
-                <h2>Autres étudiant.e.s</h2>
-                <input class="search-bar" type="search" v-model="searchQueryOutsideGroup"
-                    placeholder="Rechercher un.e étudiant.e">
-                <ul class="list-presence">
-                    <li v-for="student in filteredStudentsOutsideGroup" :key="student.studentNumber">
-                        <div class="student-list-container">
-                            <div class="student-info">
-                                <input type="checkbox" :value="student.studentNumber" v-model="absentStudents">
-                                <label>{{ student.studentNumber }} {{ student.surname }} {{ student.name }}</label>
-                            </div>
-                            <div class="student-group-number">
-                                <p>Groupe {{ student.groupNumber }}</p>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        -->
         <button v-if="!callSaved" id="btn-save" class="button" @click="saveCallAndGoBack">Sauvegarder l'appel</button>
     </main>
 </template>
@@ -58,8 +33,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SearchIcon from '@/shared/assets/icon/SearchIcon.vue';
 import { getStudentsByGroupId } from '@/shared/fetchers/students';
-import { postAbsence } from '@/shared/fetchers/presence';
-import { postSlot } from '@/shared/fetchers/slots';
+import { postAbsence, updateAbsences, getAbsencesBySlotId } from '@/shared/fetchers/presence';
+import { postSlot, searchSlot } from '@/shared/fetchers/slots';
 
 const studentsInGroup = ref([]); 
 const searchQuery = ref("");
@@ -75,7 +50,24 @@ const slot = ref(null);
 
 onMounted(async () => {
     studentsInGroup.value = await getStudentsByGroupId(groupId);
-    slot.value = await postSlot(groupId, courseName, sessionTypeGlobalId, date);
+    
+    const existingSlot = await searchSlot(groupId, courseName, sessionTypeGlobalId, date);
+    
+    if (existingSlot) {
+        slot.value = existingSlot;
+        isEditMode.value = true;
+        
+        const existingAbsences = await getAbsencesBySlotId(slot.value.id);
+        const absentIds = existingAbsences.map(p => p.student_id);
+        
+        presentStudentsId.value = studentsInGroup.value
+            .filter(student => !absentIds.includes(student.id))
+            .map(student => student.id);
+    } else {
+        slot.value = null;
+        isEditMode.value = false;
+        selectAll(); 
+    }
 });
 
 const props = defineProps({
@@ -111,6 +103,9 @@ function selectAll() {
 
 const callSaved = ref(false);
 async function saveCall() {
+    if (!slot.value) {
+        slot.value = await postSlot(groupId, courseName, sessionTypeGlobalId, date);
+    }
     await postAbsence(slot.value.id, absentStudentsId.value);
     callSaved.value = true;
 }

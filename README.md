@@ -42,6 +42,7 @@ npm install
 ```
 
 ### Database Configuration
+You need to create a local .env file in the GestionAbsenceBack folder
 - SQL Database.
 - Recommanded URL in .env file
 ``` env
@@ -51,9 +52,13 @@ DATABASE_URL="file:./dev.db"
 ```sh
 npx prisma migrate dev --name init
 ```
-
+### Populate the database
+Run prisma/seed.ts to create the 6 semesters and the MANAGER account
+```sh
+npx prisma db seed
+```
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run start
+npm run start:dev
 ```

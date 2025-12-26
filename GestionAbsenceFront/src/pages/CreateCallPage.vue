@@ -15,15 +15,13 @@
       </div>
 
       <div class="form-group">
-        <label for="course-input">2. Matière</label>
-        <input 
-          id="course-input" 
-          type="text" 
-          v-model="selectedCourseName" 
-          placeholder="Ex: Algèbre Linéaire" 
-          required 
-        />
-        <small>Si la matière n'existe pas, elle sera créée automatiquement.</small>
+        <label for="course-select">2. Matière</label>
+        <select id="course-select" v-model="selectedCourseId" required>
+          <option :value="null" disabled>-- Choisir une matière --</option>
+          <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
+            {{ subject.name }}
+          </option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -52,29 +50,30 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getGroups } from '../shared/fetchers/groups';
-// MODIFIÉ : Importe la nouvelle fonction
 import { getGlobalSessionTypes } from '../shared/fetchers/session_type';
+import { getCourseMaterials } from '../shared/fetchers/course_material';
 
 const router = useRouter();
 
 // États pour les listes des menus déroulants
 const groups = ref([]);
-const globalSessionTypes = ref([]); // <-- NOUVEAU
+const globalSessionTypes = ref([]);
+const subjects = ref([]); // AJOUT : Liste des matières
 
 // États pour les valeurs sélectionnées
 const selectedGroupId = ref(null);
-const selectedCourseName = ref('');
-const selectedSessionTypeGlobalId = ref(null); // <-- MODIFIÉ
+const selectedCourseId = ref(null);
+const selectedSessionTypeGlobalId = ref(null);
 const selectedDate = ref(new Date().toISOString().split('T')[0]); 
 
 /**
- * Au chargement, récupère les groupes et les types de session globaux.
+ * Au chargement, récupère les groupes, les types de session et les matières.
  */
 onMounted(async () => {
-  // MODIFIÉ : Appelle la nouvelle fonction
-  [groups.value, globalSessionTypes.value] = await Promise.all([
+  [groups.value, globalSessionTypes.value, subjects.value] = await Promise.all([
     getGroups(),
-    getGlobalSessionTypes()
+    getGlobalSessionTypes(),
+    getCourseMaterials()
   ]);
 });
 
@@ -82,16 +81,17 @@ onMounted(async () => {
  * Valide la sélection et redirige vers la page d'appel.
  */
 function startCall() {
-  if (!selectedGroupId.value || !selectedCourseName.value || !selectedSessionTypeGlobalId.value || !selectedDate.value) {
+  if (!selectedGroupId.value || !selectedCourseId.value || !selectedSessionTypeGlobalId.value || !selectedDate.value) {
     alert("Veuillez remplir tous les champs.");
     return;
   }
   
   const selectedGroup = groups.value.find(g => g.id === selectedGroupId.value);
   const selectedSession = globalSessionTypes.value.find(s => s.id === selectedSessionTypeGlobalId.value);
+  const selectedSubject = subjects.value.find(s => s.id === selectedCourseId.value);
   
-  if (!selectedGroup || !selectedSession) {
-     alert("Erreur : groupe ou type de session non trouvé.");
+  if (!selectedGroup || !selectedSession || !selectedSubject) {
+     alert("Erreur : groupe, matière ou type de session non trouvé.");
      return;
   }
 
@@ -102,10 +102,8 @@ function startCall() {
     params: {
       groupId: selectedGroupId.value,
       groupName: selectedGroup.name,
-      courseName: selectedCourseName.value,
-      // MODIFIÉ : On envoie l'ID du type de session
+      courseName: selectedSubject.name,
       sessionTypeGlobalId: selectedSessionTypeGlobalId.value, 
-      // On envoie aussi le nom pour l'affichage
       sessionTypeName: selectedSession.name, 
       date: dateForUrl
     }

@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UploadedFile, UseInterceptors, ParseIntPipe, BadRequestException, UseGuards, Request } from '@nestjs/common';
 import { PresenceService } from './presence.service';
 import { CreatePresenceDto } from './dto/create-presence.dto';
-import { Prisma } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
 @ApiTags('Presence')
@@ -96,5 +99,51 @@ export class PresenceController {
     @Body() body: { justified: boolean },
   ) {
     return this.presenceService.updateJustification(student_id, slot_id, body.justified);
+  }
+
+  @Post('justify/:slot_id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Uploader un justificatif (PDF uniquement)' })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads/justificatifs', // Assurez-vous que ce dossier existe
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = extname(file.originalname);
+        callback(null, `justif-${uniqueSuffix}${ext}`);
+      },
+    }),
+    fileFilter: (req, file, callback) => {
+      if (file.mimetype !== 'application/pdf') {
+        return callback(new BadRequestException('Seuls les fichiers PDF sont autorisés'), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
+  }))
+  async uploadJustification(
+    @Param('slot_id', ParseIntPipe) slotId: number,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req
+  ) {
+    if (!file) throw new BadRequestException('Fichier manquant');
+    
+    // req.user contient le payload du JWT. 
+    // Assurez-vous que votre AuthService/JwtStrategy inclut 'studentId' si disponible.
+    // Sinon, il faudra le récupérer via le UserService avec l'email.
+    
+    const user = req.user; 
+    
+    // Vérification basique
+    if (!user.studentId && user.role !== 'GESTIONNAIRE') { 
+        throw new BadRequestException("Ce compte n'est pas lié à un étudiant.");
+    }
+
+    // Sauvegarde en base
+    return this.presenceService.addJustification(
+      user.studentId, // ID de la table 'student'
+      slotId, 
+      file.path
+    );
   }
 }

@@ -135,4 +135,25 @@ export class PresenceService {
   async deleteMany() {
     return this.prisma.presence.deleteMany();
   }
+
+  async addJustification(studentId: number, slotId: number, filePath: string) {
+    return this.prisma.presence.upsert({
+      where: {
+        student_id_slot_id: {
+          student_id: studentId,
+          slot_id: slotId,
+        },
+      },
+      update: {
+        justified: true,
+        justificationFile: filePath,
+      },
+      create: {
+        student_id: studentId,
+        slot_id: slotId,
+        justified: true,
+        justificationFile: filePath,
+      },
+    });
+  }
 }

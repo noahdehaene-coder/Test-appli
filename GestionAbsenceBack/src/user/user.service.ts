@@ -1,5 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import { student } from '@prisma/client';
 import { User, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -49,5 +50,40 @@ export class UserService {
     
     const { password: _, ...result } = user;
     return result;
+  }
+
+  async createOrUpdateStudentAccount(
+    studentData: student, 
+    firstName: string, 
+    lastName: string
+  ) {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(studentData.student_number, saltRounds);
+
+    const cleanStr = (str: string) => str
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-");
+
+    const fNameClean = cleanStr(firstName);
+    const lNameClean = cleanStr(lastName);
+
+    const email = `${fNameClean}.${lNameClean}@etu.univ-grenoble-alpes.fr`;
+
+    return this.prisma.user.upsert({
+      where: { 
+        studentId: studentData.id 
+      },
+      update: {
+        name: studentData.name,
+      },
+      create: {
+        email: email,
+        password: hashedPassword,
+        name: studentData.name,
+        role: UserRole.ETUDIANT,
+        studentId: studentData.id
+      },
+    });
   }
 }

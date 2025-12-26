@@ -65,8 +65,12 @@ const handleLogin = async () => {
     if (!finalEmail.includes('@')) {
       finalEmail = finalEmail + '@univ-grenoble-alpes.fr';
     } 
-    else if (!finalEmail.endsWith('@univ-grenoble-alpes.fr')) {
-      error.value = "L'email doit être une adresse @univ-grenoble-alpes.fr";
+    
+    const isStaff = finalEmail.endsWith('@univ-grenoble-alpes.fr');
+    const isStudent = finalEmail.endsWith('@etu.univ-grenoble-alpes.fr');
+
+    if (!isStaff && !isStudent) {
+      error.value = "L'email doit être une adresse UGA (@univ-grenoble-alpes.fr ou @etu.univ-grenoble-alpes.fr)";
       isLoading.value = false;
       return;
     }
@@ -74,8 +78,12 @@ const handleLogin = async () => {
     const success = await auth.login(finalEmail, password.value);
 
     if (success) {
-      if (auth.userRole.value === 'GESTIONNAIRE') {
+      const role = auth.userRole.value;
+
+      if (role === 'GESTIONNAIRE') {
         router.push({ name: 'AdminDashboard' });
+      } else if (role === 'ETUDIANT') {
+        router.push({ name: 'MyAbsencesPage' }); 
       } else {
         router.push({ name: 'ProfessorDashboard' });
       }

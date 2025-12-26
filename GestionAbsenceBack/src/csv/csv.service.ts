@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { StudentService } from 'src/student/student.service';
-import { Prisma } from '@prisma/client';
-import * as fs from 'fs';
+import { UserService } from 'src/user/user.service';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
 
@@ -11,10 +10,11 @@ export class CsvService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly studentService: StudentService,
+    private readonly userService: UserService,
   ) {}
 
   async parseCsvAddStudents(fileBuffer: Buffer): Promise<any[]> {
-    const students: { student_number: string; name: string }[] = [];
+    const students: { student_number: string; name: string; first_name: string; last_name: string; }[] = [];
     const bufferStream = new Readable();
     bufferStream.push(fileBuffer);
     bufferStream.push(null);
@@ -29,12 +29,19 @@ export class CsvService {
 
           if (student_number && last_name && first_name) {
             const name = `${last_name} ${first_name}`;
-            students.push({ student_number, name });
+            students.push({ student_number, name, first_name, last_name });
           }
         })
         .on('end', async () => {
           try {
-            await this.prisma.student.createMany({ data: students });
+            for (const s of students) {
+               const createdStudent = await this.prisma.student.upsert({
+                 where: { student_number: s.student_number },
+                 update: { name: s.name },
+                 create: {student_number: s.student_number,name: s.name}
+               });
+               await this.userService.createOrUpdateStudentAccount(createdStudent, s.first_name, s.last_name);
+            }
             resolve(students);
           } catch (error) {
             reject(`Erreur dans l'insertion : ${error.message}`);

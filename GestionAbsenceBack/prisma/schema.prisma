@@ -20,21 +20,26 @@ model User {
   name     String
   role     UserRole
   slots    slot[]
+
+  studentId Int?     @unique
+  student   student? @relation(fields: [studentId], references: [id])
 }
 
 
 enum UserRole {
   GESTIONNAIRE
   PROFESSEUR
+  ETUDIANT
 }
 
 
 model student {
   id                  Int           @id @default(autoincrement())
-  student_number      String
+  student_number      String        @unique
   name                String
   student_inscription inscription[]
   student_presence    presence[]
+  user                User?
 }
 
 model inscription {
@@ -90,6 +95,7 @@ model presence {
   student_id     Int
   slot_id        Int
   justified      Boolean @default(false)
+  justificationFile String?
   presence_student student @relation(fields: [student_id], references: [id], onDelete: Cascade)
   presence_slot    slot    @relation(fields: [slot_id], references: [id], onDelete: Cascade)
 

@@ -14,6 +14,7 @@ import GroupModification from './pages/GroupModification.vue';
 import StudentModification from './pages/StudentModification.vue';
 import CourseSummaryPage from './pages/CourseSummaryPage.vue';
 import StudentSummaryPage from './pages/StudentSummaryPage.vue';
+import MyAbsencesPage from './pages/MyAbsencesPage.vue';
 
 const routes = [
   {
@@ -39,6 +40,12 @@ const routes = [
     component: CallPage,
     meta: { requiresAuth: true },
     props: true,
+  },
+  { 
+    path: '/mes-absences',
+    name: 'MyAbsencesPage', 
+    component: MyAbsencesPage, 
+    meta: { requiresAuth: true, role: 'ETUDIANT' } 
   },
   {
     path: '/admin',
@@ -109,9 +116,10 @@ router.beforeEach((to, from, next) => {
     next({ name: 'Login' });
   } 
   else if (to.meta.role && token && user.role !== to.meta.role) {
-
     if (user.role === 'GESTIONNAIRE') {
       next({ name: 'AdminDashboard' });
+    } else if (user.role === 'ETUDIANT') {
+      next({ name: 'MyAbsencesPage' });
     } else {
       next({ name: 'ProfessorDashboard' });
     }
@@ -119,6 +127,8 @@ router.beforeEach((to, from, next) => {
   else if (to.name === 'Login' && token) {
      if (user.role === 'GESTIONNAIRE') {
       next({ name: 'AdminDashboard' });
+    } else if (user.role === 'ETUDIANT') {
+      next({ name: 'MyAbsencesPage' });
     } else {
       next({ name: 'ProfessorDashboard' });
     }

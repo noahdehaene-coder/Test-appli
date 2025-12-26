@@ -164,3 +164,30 @@ export async function updatePresenceJustification(studentId, slotId, isJustified
         console.error(error);
     }
 }
+
+export async function uploadJustification(slotId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/presence/justify/${slotId}`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}` 
+            // Pas de Content-Type ici, le navigateur le gère pour le FormData
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error('Erreur upload justificatif');
+    }
+    return response.json();
+}
+
+/**
+ * Alias pour récupérer les absences d'un étudiant (utilisé dans MyAbsencesPage).
+ * On réutilise la fonction getStudentAbsencesById qui fait déjà le travail.
+ */
+export const getStudentAbsences = getStudentAbsencesById;

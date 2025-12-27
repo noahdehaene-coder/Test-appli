@@ -101,7 +101,7 @@ async function saveCallAndGoBack() {
     await updateAbsences(slot.value.id, absentStudentsId.value);
     
     callSaved.value = true;
-    router.go(-1);
+    router.go(-2);
 }
 </script>
 

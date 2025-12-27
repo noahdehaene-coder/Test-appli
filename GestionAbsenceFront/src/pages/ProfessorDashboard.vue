@@ -8,6 +8,11 @@
         + Créer un nouvel appel
       </button>
       <p>Créez un appel pour un groupe, une matière et une date de votre choix.</p>
+
+      <button class="button primary-button" @click="configure">
+        Mes matières
+      </button>
+      <p>Sélectionner/Modifier vos matières</p>
     </div>
 
     <hr />
@@ -92,6 +97,10 @@ function goToCreateCall() {
   router.push({ name: 'CreateCallPage' });
 }
 
+function configure() {
+  router.push({ name: 'SelectSubjectsPage' });
+}
+
 /**
  * MODIFIER UN APPEL EXISTANT
  * Redirige vers CallPage avec les paramètres du slot existant.
@@ -147,6 +156,7 @@ function startRecentCall(callTemplate) {
   padding: 1.5rem;
   border-radius: 8px;
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .create-call-section p {

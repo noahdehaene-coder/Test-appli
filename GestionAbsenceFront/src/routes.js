@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from './pages/LoginPage.vue';
 import ProfessorDashboard from './pages/ProfessorDashboard.vue';
 import CreateCallPage from './pages/CreateCallPage.vue';
+import SelectSubjectsPage from './pages/SelectSubjectsPage.vue';
 import AdminDashboard from './pages/AdminDashboard.vue';
 import ManageProfessorsPage from './pages/ManageProfessorsPage.vue';
 
@@ -26,6 +27,12 @@ const routes = [
     path: '/',
     name: 'ProfessorDashboard',
     component: ProfessorDashboard,
+    meta: { requiresAuth: true, role: 'PROFESSEUR' },
+  },
+  {
+    path: '/configuration/matieres',
+    name: 'SelectSubjectsPage',
+    component: SelectSubjectsPage,
     meta: { requiresAuth: true, role: 'PROFESSEUR' },
   },
   {

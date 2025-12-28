@@ -132,7 +132,6 @@ const filteredGroups = computed(() =>
 async function submit() {
     let currentStudentId = studentId;
     try {
-        // 1. Sauvegarde / Création de l'étudiant
         if (isNewStudent.value) {
             const newStudent = await postStudent({
                 name: student.value.name,
@@ -146,26 +145,20 @@ async function submit() {
             });
         }
 
-        // 2. Gestion des inscriptions
         const oldIds = initialEnrolledIds.value; 
         const newIds = studentGroupsIds.value;   
 
-        // A. AJOUTS
         const toAdd = newIds.filter(id => !oldIds.includes(id));
         for (const groupId of toAdd) {
             await postInscription(currentStudentId, groupId);
         }
 
-        // B. SUPPRESSIONS (Correction ici)
         const toRemove = oldIds.filter(id => !newIds.includes(id));
         for (const groupId of toRemove) {
-            // On appelle directement la fonction avec (ID étudiant, ID groupe)
             await deleteInscriptionById(currentStudentId, groupId);
         }
 
         alert("Modifications enregistrées avec succès !");
-        // On recharge les données pour être sûr que tout est synchro
-        // ou on redirige :
         router.push({ name: 'SelectStudentModification' });
 
     } catch (error) {

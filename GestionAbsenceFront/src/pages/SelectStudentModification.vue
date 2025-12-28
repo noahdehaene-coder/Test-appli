@@ -1,6 +1,12 @@
 <template>
   <main class="left">
-    <h1>Sélectionner un.e étudiant.e à modifier</h1>
+    <div class="page-header">
+      <h1>Sélectionner un.e étudiant.e à modifier</h1>
+      
+      <RouterLink to="/modification/etudiant/0" class="btn-add">
+        + Créer un étudiant
+      </RouterLink>
+    </div>
 
     <div v-if="loading" class="loading-container">
       Chargement de l'annuaire...
@@ -295,5 +301,33 @@ function filterList(list, query) {
 
 .loading-container, .empty-msg {
   text-align: center; color: #888; margin-top: 2rem; font-style: italic;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-right: 1rem; /* Petit espace à droite pour ne pas coller au bord */
+}
+
+.btn-add {
+  background-color: var(--color-2); /* Utilise la couleur de vos badges */
+  color: white;
+  padding: 0.6rem 1.2rem;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-add:hover {
+  opacity: 0.9;
+  background-color: var(--color-1); /* Optionnel : change un peu la couleur au survol */
+}
+
+.btn-add:active {
+  transform: translateY(1px);
 }
 </style>

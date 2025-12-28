@@ -110,6 +110,7 @@ export async function postStudents(file) {
         });
 
         if (!response.ok) {
+            const errorText = await response.text();
             throw new Error("Erreur lors de l'envoi du fichier étudiant.e.s");
         }
         return await response.json();

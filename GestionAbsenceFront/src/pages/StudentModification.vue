@@ -137,18 +137,23 @@ async function submit() {
     let currentStudentId = studentId;
     try {
         if (isNewStudent.value) {
+            // C'est ici qu'on applique la règle de gestion pour la CRÉATION
             const newStudent = await postStudent({
                 name: student.value.name,
-                student_number: student.value.student_number
+                student_number: student.value.student_number,
+                // AJOUT : Le mot de passe est défini comme étant le numéro étudiant
+                password: student.value.student_number 
             });
             currentStudentId = newStudent.id;
         } else {
+            // Pour la MODIFICATION, on ne touche pas au mot de passe ici
             await putStudentById(currentStudentId, {
                 name: student.value.name,
                 student_number: student.value.student_number
             });
         }
 
+        // Le reste de la fonction pour les inscriptions aux groupes reste inchangé
         const oldIds = initialEnrolledIds.value; 
         const newIds = studentGroupsIds.value;   
 

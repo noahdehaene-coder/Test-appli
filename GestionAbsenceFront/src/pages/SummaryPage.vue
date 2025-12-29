@@ -25,7 +25,8 @@
           <li v-for="course in filteredCourses" :key="course.id">
             <label>
               <RouterLink :to="`/recapitulatifs/matiere/${course.name}/${course.id}`" class="router-link">
-                {{ course.name }}
+                <span class="course-name">{{ course.name }}</span>
+                <span class="semester-badge" v-if="course.semester_id">S{{ course.semester_id }}</span>
               </RouterLink>
             </label>
           </li>
@@ -82,11 +83,17 @@ const filteredStudents = computed(() => {
   )
 })
 
-// Filtrer les matières barre de recherche
 const filteredCourses = computed(() => {
-  return courses.value.filter((course) =>
+  let result = courses.value.filter((course) =>
     course.name.toLowerCase().includes(courseQuery.value.toLowerCase())
-  )
+  );
+
+  return result.sort((a, b) => {
+    if (a.semester_id !== b.semester_id) {
+      return (a.semester_id || 0) - (b.semester_id || 0);
+    }
+    return a.name.localeCompare(b.name);
+  });
 })
 
 function formatDate(date) {
@@ -161,7 +168,29 @@ async function exportAbsL3() {
   margin-top: 0;
 }
 
+.router-link {
+  display: flex;
+  justify-content: space-between; /* Nom à gauche, Badge à droite */
+  align-items: center;
+  width: 80%;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
 .list {
   width: max-content;
+}
+
+.semester-badge {
+  background-color: var(--color-2);
+  color: white;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+  min-width: 30px;
+  text-align: center;
 }
 </style>

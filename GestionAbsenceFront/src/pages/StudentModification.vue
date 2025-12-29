@@ -51,6 +51,7 @@
 
         <div class="btn">
             <button @click="submit" class="button">Enregistrer</button>
+            <button type="button" v-if="!isNewStudent" @click="deleteStudent" class="btn-delete">Supprimer</button>
         </div>
     </main>
 </template>
@@ -59,7 +60,7 @@
 import SearchIcon from '@/shared/assets/icon/SearchIcon.vue';
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getStudentById, postStudent, putStudentById } from '../shared/fetchers/students';
+import { getStudentById, postStudent, putStudentById, deleteStudentById } from '../shared/fetchers/students';
 import { getGroupsByStudentId, getAllGroupsBySemester, getGroupById } from '../shared/fetchers/groups';
 import { getAllSemesters } from '../shared/fetchers/semesters';
 import { postInscription, deleteInscriptionById, getInscriptions } from '../shared/fetchers/inscriptions';
@@ -132,6 +133,21 @@ const filteredGroups = computed(() =>
         group.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
 );
+
+async function deleteStudent() {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer définitivement cet étudiant ?")) {
+        return;
+    }
+
+    try {
+        await deleteStudentById(studentId);
+        alert("Étudiant supprimé avec succès.");
+        router.push({ name: 'SelectStudentModification' });
+    } catch (error) {
+        console.error(error);
+        alert("Une erreur est survenue lors de la suppression.");
+    }
+}
 
 async function submit() {
     let currentStudentId = studentId;
@@ -256,5 +272,22 @@ select {
 .btn {
     margin-top: 2rem;
     text-align: center;
+}
+
+.btn-delete {
+    background-color: #dc3545; /* Rouge erreur classique */
+    color: white;
+    border: none;
+    padding: 0.8rem 1.3rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    margin-left: 5rem;
+}
+
+.btn-delete:hover {
+    background-color: #c82333; /* Rouge plus foncé au survol */
 }
 </style>

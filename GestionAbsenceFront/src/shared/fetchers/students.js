@@ -172,3 +172,21 @@ export async function deleteStudents() {
         console.error("Erreur lors de la suppression des étudiant.e.s:", error);
     }
 }
+
+/**
+ * Supprime un.e étudiant.e par son ID.
+ */
+export async function deleteStudent(id) {
+    try {
+        const response = await fetch(`http://localhost:3000/student/${id}`, {
+            method: "DELETE",
+            headers: getAuthHeader()
+        });
+        if (!response.ok) throw new Error("Erreur lors de la suppression de l'étudiant");
+        return await response.json();
+    } catch (error) {
+        console.error("Erreur lors de la suppression :", error);
+        throw error;
+    }
+}
+export const deleteStudentById = deleteStudent;

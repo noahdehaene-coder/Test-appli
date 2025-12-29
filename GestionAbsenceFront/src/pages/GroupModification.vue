@@ -70,7 +70,7 @@
                 v-if="student.originalGroupId" 
                 @click="addStudent(student, true)" 
                 class="button move-btn" 
-                title="Déplacer (Quitte l'autre groupe)"
+                title="Déplacer (Quitte ce groupe)"
               >
                 ←
               </button>

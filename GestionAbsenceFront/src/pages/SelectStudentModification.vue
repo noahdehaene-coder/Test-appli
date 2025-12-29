@@ -116,8 +116,8 @@ async function loadData() {
       getInscriptions()
     ]);
 
-    // MAP : ID Groupe (String) -> ID Semestre (Int)
-    // On convertit les clés en String pour éviter les erreurs de type
+    allStudents.sort((a, b) => a.name.localeCompare(b.name));
+
     const groupSemesterMap = new Map();
     allGroups.forEach(g => {
       if (g.semester_id) groupSemesterMap.set(String(g.id), g.semester_id);
@@ -128,17 +128,13 @@ async function loadData() {
     const l3 = [];
 
     for (const student of allStudents) {
-      // Filtrer les inscriptions de l'étudiant
-      // On compare en String pour être sûr
       const myInscriptions = allInscriptions.filter(i => String(i.student_id) === String(student.id));
       
       let maxYear = 0;
 
       if (myInscriptions.length === 0) {
-        // Optionnel : Mettre les étudiants SANS GROUPE en L1 par défaut ou ailleurs
         maxYear = 1; 
       } else {
-        // Trouver l'année la plus élevée parmi les groupes de l'étudiant
         for (const inscription of myInscriptions) {
           const semesterId = groupSemesterMap.get(String(inscription.group_id));
           if (semesterId) {
@@ -147,11 +143,9 @@ async function loadData() {
             if (year > maxYear) maxYear = year;
           }
         }
-        // Si on n'a pas trouvé de semestre valide (ex: groupes hors cursus), défaut L1
         if (maxYear === 0) maxYear = 1;
       }
 
-      // Répartition
       if (maxYear === 3) l3.push(student);
       else if (maxYear === 2) l2.push(student);
       else l1.push(student); // L1 par défaut
@@ -161,8 +155,6 @@ async function loadData() {
     studentsL2.value = l2;
     studentsL3.value = l3;
 
-    // DEBUG : Décommentez pour voir la répartition dans la console
-    // console.log("Répartition :", { L1: l1.length, L2: l2.length, L3: l3.length });
 
   } catch (error) {
     console.error("Erreur chargement données:", error);

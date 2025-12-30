@@ -45,7 +45,7 @@
 
     <div v-if="recentCalls.length > 0" class="recent-calls-section">
       <h2>Relancer un appel récent</h2>
-      <p class="info-text">Cliquez sur un modèle pour créer un appel aujourd'hui.</p>
+      <p class="info-text">Cliquez sur un modèle pour créer un appel aujourd'hui. N'oubliez pas de modifier les horaires si nécessaire.</p>
       
       <div class="recent-calls-list">
         <div v-for="call in recentCalls" :key="call.id" class="recent-call-item">
@@ -87,8 +87,6 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
-// --- CORRECTION DES IMPORTS ---
-// On importe les fonctions avec les BONS noms qui sont dans slots.js
 import { getUser } from '@/shared/fetchers/user';
 import { fetchRecentCalls, fetchSlotsByDate } from '@/shared/fetchers/slots'; 
 
@@ -98,14 +96,12 @@ const recentCalls = ref([]);
 const todayCalls = ref([]);
 const isLoading = ref(true);
 
-// Utilitaire : Extrait "08:00" depuis "2023-10-10T08:00:00"
 function getTimeFromIso(isoString) {
   if (!isoString) return "08:00"; 
   const date = new Date(isoString);
   return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Utilitaire : Affiche "08:00" (pour l'affichage texte)
 function formatTime(isoString) {
   if (!isoString) return '--:--';
   const date = new Date(isoString);
@@ -120,17 +116,13 @@ onMounted(async () => {
       
       const today = new Date().toISOString().split('T')[0]; // Date YYYY-MM-DD
 
-      // On appelle les fonctions fetch... (sans user.id car votre slots.js utilise le token)
       const [rawRecentCalls, rawTodaySlots] = await Promise.all([
         fetchRecentCalls(),
         fetchSlotsByDate(today)
       ]);
       
-      // --- LOGIQUE MAGIQUE ---
-      // On prépare les modèles pour qu'ils aient chacun leurs propres champs d'heure
       recentCalls.value = (rawRecentCalls || []).map(call => ({
         ...call,
-        // On initialise avec l'heure de l'ancien appel, ou 08h-10h par défaut
         inputStart: call.start_time ? getTimeFromIso(call.start_time) : "08:00",
         inputEnd: call.end_time ? getTimeFromIso(call.end_time) : "10:00"
       }));
@@ -151,15 +143,12 @@ function configure() { router.push('/courses-management'); }
  * LANCE UN NOUVEL APPEL BASÉ SUR LE MODÈLE ET L'HEURE CHOISIE
  */
 function startRecentCall(callTemplate) {
-  // 1. On prend la date d'aujourd'hui
   const now = new Date();
   const dateYMD = now.toISOString().split('T')[0];
 
-  // 2. On combine la date du jour avec l'heure que le prof a choisie dans les inputs
   const startIso = new Date(`${dateYMD}T${callTemplate.inputStart}:00`).toISOString();
   const endIso = new Date(`${dateYMD}T${callTemplate.inputEnd}:00`).toISOString();
 
-  // 3. On redirige vers la page d'appel avec ces informations précises
   router.push({
     name: 'CallPage', 
     params: {
@@ -170,7 +159,6 @@ function startRecentCall(callTemplate) {
       sessionTypeGlobalId: callTemplate.sessionTypeGlobalId,
       date: now.toISOString(),
       
-      // On transmet les heures choisies
       startTime: startIso,
       endTime: endIso
     }

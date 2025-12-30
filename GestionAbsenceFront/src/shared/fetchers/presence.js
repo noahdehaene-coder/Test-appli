@@ -29,7 +29,7 @@ export async function getAbsenceByYear(year) {
  */
 export async function getStudentsAbsenceByCourse(courseId) {
     try {
-        const response = await fetch(`http://localhost:3000/student/presence/course/${courseId}`, {
+        const response = await fetch(`http://localhost:3000/presence/course/${courseId}`, {
             method: 'GET',
             headers: getAuthHeader()
         });

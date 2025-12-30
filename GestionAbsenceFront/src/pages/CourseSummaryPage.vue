@@ -33,7 +33,7 @@
         </thead>
         <tbody>
           <tr v-for="absence in filteredAbsences" :key="absence.id">
-            <td>{{ formatDate(absence.date) }}</td>
+            <td>{{ formatDateTime(absence.date, absence.start_time, absence.end_time) }}</td>
             <td>{{ absence.name }}</td>
             <td>{{ absence.session_type }}</td>
             <td 
@@ -144,6 +144,28 @@ function formatDate(dateString) {
     month: '2-digit',
     year: 'numeric'
   });
+}
+
+function formatTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Fonction d'affichage Date + Heures
+function formatDateTime(dateString, startString, endString) {
+  if (!dateString) return "";
+  const dateObj = new Date(dateString);
+  const dateText = dateObj.toLocaleDateString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+
+  if (startString && endString) {
+    const s = new Date(startString).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    const e = new Date(endString).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    return `${dateText} (${s} - ${e})`;
+  }
+  return dateText;
 }
 </script>
 

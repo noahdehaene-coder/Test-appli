@@ -136,8 +136,8 @@ onMounted(async () => {
   }
 });
 
-function goToCreateCall() { router.push('/create-call'); }
-function configure() { router.push('/courses-management'); }
+function goToCreateCall() { router.push('/call/new'); }
+function configure() { router.push('/configuration/matieres'); }
 
 /**
  * LANCE UN NOUVEL APPEL BASÉ SUR LE MODÈLE ET L'HEURE CHOISIE

@@ -21,6 +21,12 @@ export class PresenceController {
      return this.presenceService.getBySlotId(slot_id);
   }
 
+  @Get('course/:id')
+  @ApiOperation({ summary: 'Récupérer les absences par ID de cours (Matière)' })
+  async getByCourse(@Param('id', ParseIntPipe) courseId: number) {
+     return this.presenceService.getAbsencesByCourse(courseId);
+  }
+
   @Put('update/:slot_id')
   @ApiOperation({ summary: 'Mettre à jour les absences pour un créneau' })
   async updateMany(@Param('slot_id', ParseIntPipe) slot_id: number, @Body() student_ids: number[]) {
@@ -155,11 +161,7 @@ export class PresenceController {
     @Request() req
   ) {
     if (!file) throw new BadRequestException('Fichier manquant');
-    
-    // req.user contient le payload du JWT. 
-    // Assurez-vous que votre AuthService/JwtStrategy inclut 'studentId' si disponible.
-    // Sinon, il faudra le récupérer via le UserService avec l'email.
-    
+        
     const user = req.user; 
     
     // Vérification basique

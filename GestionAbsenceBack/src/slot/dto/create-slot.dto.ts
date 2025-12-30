@@ -3,4 +3,6 @@ export class CreateSlotBySessionDto {
     courseName : string;
     sessionTypeGlobalId: number;
     date: string;
+    start_time: string;
+    end_time: string;
   };

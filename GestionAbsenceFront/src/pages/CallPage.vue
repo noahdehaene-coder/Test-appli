@@ -93,9 +93,21 @@ function selectAll() {
     allSelected.value = !allSelected.value;
 }
 
+const startTimeParam = route.params.startTime;
+const endTimeParam = route.params.endTime;
+
 async function saveCallAndGoBack() {
     if (!slot.value) {
-        slot.value = await postSlot(groupId, courseName, sessionTypeGlobalId, date);
+        const slotData = {
+            group_id: groupId,
+            courseName: courseName,
+            session_type_id: sessionTypeGlobalId,
+            date: date,
+            start_time: startTimeParam || date, 
+            end_time: endTimeParam || date
+        };
+
+        slot.value = await postSlot(slotData);
     }
     
     await updateAbsences(slot.value.id, absentStudentsId.value);

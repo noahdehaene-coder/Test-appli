@@ -26,16 +26,18 @@ export async function getSlots(date) {
 /**
  * Crée un créneau (slot) via les noms de session.
  */
-export async function postSlot(groupId, courseName, sessionTypeGlobalId, date) {
+export async function postSlot(slotData) {
     try {
         const response = await fetch(`http://localhost:3000/slot/by-session`, {
             method: "POST",
             headers: getAuthHeader(),
             body: JSON.stringify({ 
-                groupId: groupId,
-                courseName: courseName,
-                sessionTypeGlobalId: sessionTypeGlobalId, 
-                date: date
+                groupId: slotData.group_id,
+                courseName: slotData.courseName || slotData.course_material_id, // Gère les deux cas
+                sessionTypeGlobalId: slotData.session_type_id, 
+                date: slotData.date,
+                start_time: slotData.start_time,
+                end_time: slotData.end_time
             })
         })
         
@@ -49,6 +51,7 @@ export async function postSlot(groupId, courseName, sessionTypeGlobalId, date) {
 
     } catch (error) {
         console.error("Erreur lors de la création du créneau :", error);
+        throw error;
     }
 }
 

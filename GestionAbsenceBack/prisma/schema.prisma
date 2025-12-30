@@ -105,6 +105,8 @@ model presence {
 model slot {
   id                Int          @id @default(autoincrement())
   date              DateTime
+  start_time             DateTime      @default(now())
+  end_time               DateTime      @default(now())
   presence_slot     presence[]
   group_id          Int
   slot_group        group        @relation(fields: [group_id], references: [id], onDelete: Cascade)

@@ -29,6 +29,10 @@
             <br />
             <small>{{ slot.slot_group.name }}</small>
           </span>
+
+          <div class="slot-time" style="color: #666; font-size: 0.9em; margin-top: 4px;">
+            <strong>{{ formatTime(slot.start_time) }}-{{ formatTime(slot.end_time) }}</strong>
+          </div>
           
           <button class="button secondary-button" @click="editExistingCall(slot)">
             Modifier l'appel
@@ -140,6 +144,11 @@ function startRecentCall(callTemplate) {
       date: today
     }
   });
+}
+
+function formatTime(isoDate) {
+  if (!isoDate) return "";
+  return new Date(isoDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 </script>
 

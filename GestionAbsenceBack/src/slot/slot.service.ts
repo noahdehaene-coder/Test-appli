@@ -79,8 +79,7 @@ export class SlotService {
   }
 
   async postBySessionName(data: CreateSlotBySessionDto, professorId: number) {
-    const { groupId, courseName, sessionTypeGlobalId, date } = data; 
-
+    const { groupId, courseName, sessionTypeGlobalId, date, start_time, end_time } = data;
     if (typeof date !== 'string' || !date) {
       throw new Error(`La date fournie n'est pas valide ou est manquante.`);
     }
@@ -141,6 +140,8 @@ export class SlotService {
       update: {},
       create: {
         date: isoDate,
+        start_time: new Date(start_time),
+        end_time: new Date(end_time),
         slot_group: {
           connect: { id: groupId },
         },

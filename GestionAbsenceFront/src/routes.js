@@ -42,7 +42,7 @@ const routes = [
     meta: { requiresAuth: true, role: 'PROFESSEUR' },
   },
   {
-    path: '/call/:courseName/:sessionTypeName/:sessionTypeGlobalId/:groupName/:groupId/:date',
+    path: '/call/:courseName/:sessionTypeName/:sessionTypeGlobalId/:groupName/:groupId/:date/:startTime/:endTime',
     name: 'CallPage',
     component: CallPage,
     meta: { requiresAuth: true },

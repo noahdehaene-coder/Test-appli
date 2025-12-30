@@ -231,4 +231,12 @@ tbody tr:nth-child(even) {
   color: #c0392b; /* Rouge */
 }
 
+.session-type-filter label { font-weight: bold; display: block; margin-bottom: 0.5rem; }
+.session-type-options { display: flex; flex-wrap: wrap; gap: 1rem; }
+.checkbox-label {
+  display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;
+  background-color: var(--color-6, #f9f9f9); padding: 0.5rem 1rem; border-radius: 5px; border: 1px solid var(--color-3, #ccc);
+}
+.checkbox-label:hover { background-color: var(--color-5, #f0f0f0); }
+
 </style>

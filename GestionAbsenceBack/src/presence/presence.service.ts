@@ -47,7 +47,10 @@ export class PresenceService {
         },
         presence_slot: {
           select: {
+            id: true,
             date: true,
+            start_time: true,
+            end_time: true,
             slot_session_type: {
               select: {
                 sessionTypeGlobal: { 

@@ -34,7 +34,7 @@
         </thead>
         <tbody>
           <tr v-for="(absence, index) in filteredAbsences" :key="index">
-            <td>{{ formatDate(absence.date) }}</td>
+            <td>{{ formatDateTime(absence.date, absence.start_time, absence.end_time) }}</td>
             <td>{{ absence.course_material || 'Matière inconnue' }}</td>
             <td>{{ absence.session_type }}</td>
             <td 
@@ -157,6 +157,34 @@ async function toggleJustification(absence) {
     absence.justified = !newState;
     alert("Erreur lors de la modification.");
   }
+}
+
+function formatTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// Fonction principale qui combine Date + Heures
+function formatDateTime(dateString, startString, endString) {
+  if (!dateString) return "";
+  
+  const dateObj = new Date(dateString);
+  const dateText = dateObj.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  // Si on a les heures, on les ajoute entre parenthèses
+  if (startString && endString) {
+    return `${dateText} ${formatTime(startString)}-${formatTime(endString)}`;
+  }
+  
+  return dateText;
 }
 
 const filteredAbsences = computed(() => {

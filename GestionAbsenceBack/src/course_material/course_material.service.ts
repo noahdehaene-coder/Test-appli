@@ -72,6 +72,8 @@ export class CourseMaterialService {
           select: {
             id: true,
             date: true,
+            start_time: true,
+            end_time: true,
             slot_session_type: {
               select: {
                 sessionTypeGlobal: { select: { name: true } },
@@ -93,6 +95,8 @@ export class CourseMaterialService {
       session_type: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
       
       date: a.presence_slot.date,
+      start_time: a.presence_slot.start_time,
+      end_time: a.presence_slot.end_time,
       courseId: a.presence_slot.slot_session_type.session_type_course_material.id,
 
       justified: a.justified,       

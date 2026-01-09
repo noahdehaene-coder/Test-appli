@@ -72,6 +72,8 @@ export class PresenceService {
       name: a.presence_student.name,
       student_number: a.presence_student.student_number,
       date: a.presence_slot.date,
+      start_time: a.presence_slot.start_time,
+      end_time: a.presence_slot.end_time,
       session_type: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
       course_material:
         a.presence_slot.slot_session_type.session_type_course_material.name,

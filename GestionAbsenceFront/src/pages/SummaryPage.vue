@@ -104,17 +104,31 @@ function formatDate(date) {
   return `${day}-${month}-${year}`;
 }
 
-function generateCSV(abs, filename) {
-  const headers = ['Session', 'Cours', 'Date', 'Numéro étudiant', 'Nom et Prénom'];
-  const rows = abs.map(abs => [
-    abs.session_type,
-    abs.course_material,
-    formatDate(abs.date),
-    abs.student_number,
-    abs.name
-  ]);
+function formatTime(isoString) {
+  if (!isoString) return '';
+  return new Date(isoString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
 
-  const csvContent = "data:text/csv;charset=utf-8,"
+function generateCSV(abs, filename) {
+  const headers = ['Session', 'Cours', 'Date','Heure', 'Numéro étudiant', 'Nom et Prénom'];
+  const rows = abs.map(abs => {
+    // Calcul de la chaine horaire (ex: "08:00 - 10:00")
+    let timeStr = "Non défini";
+    if (abs.start_time && abs.end_time) {
+      timeStr = `${formatTime(abs.start_time)} - ${formatTime(abs.end_time)}`;
+    }
+
+    return [
+      abs.session_type,
+      abs.course_material,
+      formatDate(abs.date),
+      timeStr, // <--- On insère l'heure ici
+      abs.student_number,
+      abs.name
+    ];
+  });
+
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF"
     + headers.join(';') + "\n"
     + rows.map(row => row.join(';')).join("\n");
 

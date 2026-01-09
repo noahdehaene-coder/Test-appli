@@ -3,8 +3,10 @@
         
         <div class="main-call-area">
             <h1>Appel pour {{ sessionTypeName }} {{ courseName }}</h1>
-            <div>
-                <h2>{{ groupName }}</h2>
+            <h2>{{ groupName }}</h2>
+
+            <div class="call-container-flex">
+            <div class="left">
                 
                 <div class="search-container">
                     <SearchIcon class="search-icon" />
@@ -28,9 +30,9 @@
                         </div>
                     </li>
                 </ul>
-            </div>
-            <button v-if="!callSaved" id="btn-save" class="button" @click="saveCallAndGoBack">Sauvegarder l'appel</button>
+                <button v-if="!callSaved" id="btn-save" class="button" @click="saveCallAndGoBack">Sauvegarder l'appel</button>
 
+            </div>
             <aside class="sidebar-students">
             <h3>Ajouter un étudiant</h3>
             
@@ -57,6 +59,7 @@
                 </p>
             </div>
         </aside>
+        </div>
         </div>
 
         
@@ -90,12 +93,10 @@ const searchQuery = ref("");
 const callSaved = ref(false);
 const slot = ref(null);
 
-// --- NOUVELLES VARIABLES POUR LA COLONNE DE DROITE ---
-const otherStudents = ref([]); // Liste complète des autres étudiants
-const sidebarSearch = ref(""); // Recherche colonne de droite
+const otherStudents = ref([]);
+const sidebarSearch = ref("");
 
 onMounted(async () => {
-    // 1. Initialisation de l'appel principal (VOTRE CODE EXISTANT)
     const slotData = await searchSlot(groupId, courseName, sessionTypeGlobalId, date);
     if (slotData) {
         slot.value = slotData;
@@ -105,7 +106,6 @@ onMounted(async () => {
         ]);
         students.value = studentsData;
         
-        // On coche ceux qui NE SONT PAS dans la liste des absents
         const absentIds = presenceData.map(p => p.student_id);
         presentStudentsId.value = studentsData
             .filter(s => !absentIds.includes(s.id))
@@ -113,21 +113,14 @@ onMounted(async () => {
             
     } else {
         students.value = await getStudentsByGroupId(groupId);
-        // Par défaut tout le monde présent ? (Selon votre logique actuelle, case vide = absent ?)
-        // Dans votre template 'list-presence', vous cochez 'presentStudentsId'.
-        // Si vous voulez tout le monde présent par défaut :
-        // presentStudentsId.value = students.value.map(s => s.id);
     }
 
-    // 2. Chargement des étudiants des AUTRES groupes (POUR LA COLONNE DE DROITE)
     if (groupId) {
         const others = await getStudentsSameOtherGroup(groupId);
-        // On s'assure qu'on n'affiche pas ceux qui sont déjà dans la liste principale
         otherStudents.value = others.filter(s => !students.value.some(inList => inList.id === s.id));
     }
 });
 
-// --- LOGIQUE EXISTANTE ---
 const filteredStudents = computed(() => {
     return students.value.filter(student => 
         student.name.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -147,11 +140,9 @@ function selectAll() {
     }
 }
 
-// --- NOUVELLE LOGIQUE : FILTRE COLONNE DE DROITE ---
 const filteredOtherStudents = computed(() => {
     const search = sidebarSearch.value.toLowerCase();
     return otherStudents.value.filter(s => {
-        // On masque ceux qu'on a déjà ajoutés à la liste de gauche
         if (students.value.some(existing => existing.id === s.id)) return false;
         
         return s.name.toLowerCase().includes(search) || 
@@ -159,18 +150,14 @@ const filteredOtherStudents = computed(() => {
     });
 });
 
-// --- NOUVELLE LOGIQUE : AJOUTER UN ÉTUDIANT ---
 function addStudentToCall(studentToAdd) {
-    // 1. On l'ajoute à la liste de gauche
     students.value.push({
         ...studentToAdd,
-        isExtra: true // Pour le style
+        isExtra: true
     });
     
-    // 2. On le marque présent par défaut (coché)
     presentStudentsId.value.push(studentToAdd.id);
     
-    // (Il disparaîtra automatiquement de la liste de droite grâce au computed filter)
 }
 
 const absentStudentsId = computed(() => {
@@ -202,31 +189,27 @@ async function saveCallAndGoBack() {
 <style scoped>
 @import url("../shared/shared.css");
 
-/* MISE EN PAGE GLOBALE (Flexbox) */
-.page-layout {
+.call-container-flex {
     display: flex;
-    gap: 2rem; /* Espace entre les deux colonnes */
-    align-items: flex-start; /* Aligne en haut */
-    max-width: 1200px; /* Plus large pour accueillir la sidebar */
-    margin: 0 auto;
-    padding: 1rem;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
 }
 
-/* Colonne Gauche (Principale) */
-.main-call-area {
-    flex: 0.5; /* Prend 2/3 de l'espace */
+.left {
+    flex: 2;
 }
 
-/* Colonne Droite (Sidebar) */
+
 .sidebar-students {
-    flex: 1; /* Prend 1/3 de l'espace */
+    flex: 1;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 1rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     position: sticky;
-    top: 20px; /* Reste visible au scroll */
+    top: 20px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
@@ -236,12 +219,11 @@ async function saveCallAndGoBack() {
     text-align: center;
 }
 
-/* STYLES EXISTANTS (Conservés) */
 #select-all { margin-bottom: 1rem; }
 
 .list-presence {
     list-style-type: none;
-    width: 100%; /* Adapté à la largeur du conteneur parent */
+    width: 100%;
     font-size: 1rem;
     padding-left: 0;
 }

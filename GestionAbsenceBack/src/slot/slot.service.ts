@@ -200,7 +200,9 @@ export class SlotService {
       const sessionTypeGlobalId = slot.slot_session_type.sessionTypeGlobal.id;
       const groupId = slot.group_id;
       const groupName = slot.slot_group.name;
-      const key = `${groupId}-${courseName}-${sessionType}`;
+      const slotDayOfWeek = new Date(slot.date).getDay();
+      // Inclure le jour de la semaine dans la clé pour différencier les appels du lundi, mardi, etc.
+      const key = `${groupId}-${courseName}-${sessionType}-${slotDayOfWeek}`;
 
       if (!uniqueTemplates.has(key)) {
         uniqueTemplates.set(key, {
@@ -217,6 +219,51 @@ export class SlotService {
       }
     }
     return Array.from(uniqueTemplates.values());
+  }
+
+  async getWeekSlots() {
+    const now = new Date();
+    
+    // Début de la semaine (lundi à 00:00:00)
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // Si dimanche (0), remonter à lundi précédent
+    startOfWeek.setDate(startOfWeek.getDate() + diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Fin de la semaine (dimanche à 23:59:59)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    console.log('🔍 getWeekSlots - Début de semaine:', startOfWeek);
+    console.log('🔍 getWeekSlots - Fin de semaine:', endOfWeek);
+
+    const slots = await this.prisma.slot.findMany({
+      where: {
+        date: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      },
+      orderBy: [
+        { date: 'asc' },
+        { start_time: 'asc' },
+      ],
+      include: {
+        slot_group: { select: { name: true, id: true } },
+        slot_session_type: {
+          include: {
+            sessionTypeGlobal: { select: { name: true, id: true } },
+            session_type_course_material: { select: { name: true } }
+          }
+        },
+        professor: { select: { name: true, id: true } }
+      }
+    });
+
+    console.log('🔍 getWeekSlots - Nombre de slots trouvés:', slots.length);
+    return slots;
   }
 
   async post(data: CreateSlotDto): Promise<SlotModel> {

@@ -100,6 +100,36 @@ export async function fetchSlotsByDate(dateIsoString) {
 }
 
 /**
+ * Récupère tous les appels de la semaine en cours (tous les profs)
+ */
+export async function fetchWeekSlots() {
+    try {
+        console.log('🔍 Frontend: Appel fetchWeekSlots...');
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn("fetchWeekSlots : Utilisateur non connecté. Appel annulé.");
+            return [];
+        }
+
+        const response = await fetch('http://localhost:3000/slot/week-slots', {
+            method: 'GET',
+            headers: getAuthHeader()
+        });
+        console.log('🔍 Frontend: Réponse reçue, status:', response.status);
+        if (!response.ok) {
+            console.error('❌ Frontend: Erreur HTTP', response.status);
+            return [];
+        }
+        const data = await response.json();
+        console.log('🔍 Frontend: Données reçues:', data);
+        return data;
+    } catch (error) {
+        console.error("❌ Frontend: Erreur fetch slots semaine", error);
+        return [];
+    }
+}
+
+/**
  * Supprime tous les créneaux de la table slot.
  */
 export async function deleteSlots() {

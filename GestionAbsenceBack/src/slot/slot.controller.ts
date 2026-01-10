@@ -24,6 +24,13 @@ export class SlotController {
     return this.slotService.getRecentCalls(professorId, dayOfWeekNum);
   }
 
+  @Get('week-slots')
+  @ApiOperation({ summary: 'Récupérer tous les appels de la semaine en cours (partagés entre tous les professeurs)' })
+  @ApiResponse({ status: 200, description: 'Liste des appels de la semaine' })
+  async getWeekSlots() {
+    return this.slotService.getWeekSlots();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un créneau par son ID' })
   @ApiParam({ name: 'id', type: Number, description: 'ID du créneau' })

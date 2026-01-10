@@ -1,86 +1,117 @@
 <template>
-  <main class="left dashboard-container">
-    <h1>Tableau de bord Professeur·e</h1>
-    <p>Bienvenue sur votre espace de gestion des absences.</p>
+  <div class="dashboard-wrapper">
+    <!-- Colonne gauche : Contenu principal -->
+    <main class="left dashboard-container">
+      <h1>Tableau de bord Professeur·e</h1>
+      <p>Bienvenue sur votre espace de gestion des absences.</p>
 
-    <div class="create-call-section">
-      <button class="button primary-button" @click="goToCreateCall">
-        + Créer un nouvel appel
-      </button>
-      <p>Créez un appel pour un groupe, une matière et une date de votre choix.</p>
+      <div class="create-call-section">
+        <button class="button primary-button" @click="goToCreateCall">
+          + Créer un nouvel appel
+        </button>
+        <p>Créez un appel pour un groupe, une matière et une date de votre choix.</p>
 
-      <button class="button primary-button" @click="configure">
-        Mes matières
-      </button>
-      <p>Sélectionner/Modifier vos matières</p>
-    </div>
+        <button class="button primary-button" @click="configure">
+          Mes matières
+        </button>
+        <p>Sélectionner/Modifier vos matières</p>
+      </div>
 
-    <hr />
+      <hr />
 
-    <div v-if="todayCalls.length > 0" class="today-calls-section">
-      <h2>Appels d'aujourd'hui (En cours)</h2>
-      <p class="info-text">Vous pouvez modifier les appels créés aujourd'hui.</p>
+      <div v-if="todayCalls.length > 0" class="today-calls-section">
+        <h2>Appels d'aujourd'hui (En cours)</h2>
+        <p class="info-text">Vous pouvez modifier les appels créés aujourd'hui.</p>
+        
+        <div class="recent-calls-list">
+          <div v-for="slot in todayCalls" :key="slot.id" class="recent-call-item active-call">
+            <div class="call-info">
+              <strong>{{ slot.slot_session_type?.session_type_course_material?.name || 'Cours' }}</strong> 
+              <span class="text-muted">({{ slot.slot_session_type?.sessionTypeGlobal?.name }})</span>
+              <br />
+              <small>{{ slot.slot_group?.name || 'Groupe' }}</small> 
+            </div>
+
+            <div class="slot-time">
+                🕒 {{ formatTime(slot.start_time) }} - {{ formatTime(slot.end_time) }}
+            </div>
+
+            <button class="button secondary-button" @click="editExistingCall(slot)">
+              Reprendre l'appel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <hr v-if="recentCalls.length > 0" />
+
+      <div v-if="recentCalls.length > 0" class="recent-calls-section">
+        <h2>Lancer un appel</h2>
+        <p class="info-text">Cliquez sur un modèle pour créer un appel aujourd'hui. N'oubliez pas de modifier les horaires si nécessaire.</p>
+        
+        <div class="recent-calls-list">
+          <div v-for="call in recentCalls" :key="call.id" class="recent-call-item">
+            
+            <div class="call-info">
+              <strong>{{ call.courseName }}</strong>
+              <span class="text-muted"> - {{ call.sessionType }}</span>
+              <br>
+              <small>{{ call.groupName }}</small>
+            </div>
+
+            <div class="time-selector">
+              <div class="time-field">
+                <label>Début</label>
+                <input type="time" v-model="call.inputStart" class="time-input">
+              </div>
+              <div class="time-field">
+                <label>Fin</label>
+                <input type="time" v-model="call.inputEnd" class="time-input">
+              </div>
+            </div>
+
+            <button class="button action-button" @click="startRecentCall(call)">
+              Lancer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="!isLoading && todayCalls.length === 0" class="empty-state">
+        Aucun appel récent trouvé.
+      </div>
       
-      <div class="recent-calls-list">
-        <div v-for="slot in todayCalls" :key="slot.id" class="recent-call-item active-call">
-          <div class="call-info">
-            <strong>{{ slot.slot_session_type?.session_type_course_material?.name || 'Cours' }}</strong> 
-            <span class="text-muted">({{ slot.slot_session_type?.sessionTypeGlobal?.name }})</span>
+      <div v-if="isLoading" class="loading-message">Chargement...</div>
+    </main>
+
+    <!-- Colonne droite : Appels de la semaine -->
+    <aside class="week-calls-sidebar">
+      <h2>Appels de la semaine</h2>
+      <p class="info-text">Tous les appels programmés cette semaine (partagés entre professeurs)</p>
+      
+      <div v-if="weekSlots.length > 0" class="week-slots-list">
+        <div v-for="slot in weekSlots" :key="slot.id" class="week-slot-item" @click="openWeekCall(slot)">
+          <div class="week-slot-date">
+            {{ formatDate(slot.date) }} - {{ formatTime(slot.start_time) }}
+          </div>
+          <div class="week-slot-info">
+            <strong>{{ slot.slot_session_type?.session_type_course_material?.name || 'Cours' }}</strong>
+            <span class="text-muted"> ({{ slot.slot_session_type?.sessionTypeGlobal?.name }})</span>
             <br />
-            <small>{{ slot.slot_group?.name || 'Groupe' }}</small> 
+            <small>{{ slot.slot_group?.name || 'Groupe' }}</small>
+            <br />
+            <small class="professor-name">{{ slot.professor?.name || 'Professeur' }}</small>
           </div>
-
-          <div class="slot-time">
-              🕒 {{ formatTime(slot.start_time) }} - {{ formatTime(slot.end_time) }}
-          </div>
-
-          <button class="button secondary-button" @click="editExistingCall(slot)">
-            Reprendre l'appel
-          </button>
         </div>
       </div>
-    </div>
-
-    <hr v-if="recentCalls.length > 0" />
-
-    <div v-if="recentCalls.length > 0" class="recent-calls-section">
-      <h2>Lancer un appel</h2>
-      <p class="info-text">Cliquez sur un modèle pour créer un appel aujourd'hui. N'oubliez pas de modifier les horaires si nécessaire.</p>
       
-      <div class="recent-calls-list">
-        <div v-for="call in recentCalls" :key="call.id" class="recent-call-item">
-          
-          <div class="call-info">
-            <strong>{{ call.courseName }}</strong>
-            <span class="text-muted"> - {{ call.sessionType }}</span>
-            <br>
-            <small>{{ call.groupName }}</small>
-          </div>
-
-          <div class="time-selector">
-            <div class="time-field">
-              <label>Début</label>
-              <input type="time" v-model="call.inputStart" class="time-input">
-            </div>
-            <div class="time-field">
-              <label>Fin</label>
-              <input type="time" v-model="call.inputEnd" class="time-input">
-            </div>
-          </div>
-
-          <button class="button action-button" @click="startRecentCall(call)">
-            Lancer
-          </button>
-        </div>
+      <div v-else-if="!isLoading" class="empty-state">
+        Aucun appel cette semaine.
       </div>
-    </div>
-
-    <div v-else-if="!isLoading && todayCalls.length === 0" class="empty-state">
-      Aucun appel récent trouvé.
-    </div>
-    
-    <div v-if="isLoading" class="loading-message">Chargement...</div>
-  </main>
+      
+      <div v-if="isLoading" class="loading-message">Chargement...</div>
+    </aside>
+  </div>
 </template>
 
 <script setup>
@@ -88,13 +119,15 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { getUser } from '@/shared/fetchers/user';
-import { fetchRecentCalls, fetchSlotsByDate } from '@/shared/fetchers/slots'; 
+import { fetchRecentCalls, fetchSlotsByDate, fetchWeekSlots } from '@/shared/fetchers/slots'; 
 
 const router = useRouter();
 const professorName = ref("");
 const recentCalls = ref([]);
 const todayCalls = ref([]);
+const weekSlots = ref([]);
 const isLoading = ref(true);
+const currentUserId = ref(null);
 
 /**
  * Arrondit l'heure actuelle au quart d'heure le plus proche
@@ -142,20 +175,29 @@ function formatTime(isoString) {
   return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const options = { weekday: 'short', day: 'numeric', month: 'short' };
+  return date.toLocaleDateString('fr-FR', options);
+}
+
 onMounted(async () => {
   try {
     const user = await getUser();
     if (user) {
       professorName.value = user.name;
+      currentUserId.value = user.id;
       
       const today = new Date().toISOString().split('T')[0]; // Date YYYY-MM-DD
 
       // Récupérer le jour de la semaine actuel (0 = dimanche, 1 = lundi, etc.)
       const todayDayOfWeek = new Date().getDay();
       
-      const [rawRecentCalls, rawTodaySlots] = await Promise.all([
+      const [rawRecentCalls, rawTodaySlots, rawWeekSlots] = await Promise.all([
         fetchRecentCalls(todayDayOfWeek),
-        fetchSlotsByDate(today)
+        fetchSlotsByDate(today),
+        fetchWeekSlots()
       ]);
       
       const defaults = getRoundedTimeDefaults();
@@ -167,6 +209,8 @@ onMounted(async () => {
       }));
 
       todayCalls.value = rawTodaySlots || [];
+      // Filtrer les appels de la semaine pour exclure ceux du professeur connecté
+      weekSlots.value = (rawWeekSlots || []).filter(slot => slot.professorId !== currentUserId.value);
     }
   } catch (error) {
     console.error("Erreur chargement dashboard :", error);
@@ -226,14 +270,137 @@ function editExistingCall(slot) {
     }
   });
 }
+
+/**
+ * OUVRE UN APPEL DE LA SEMAINE (DEPUIS LA SIDEBAR)
+ */
+function openWeekCall(slot) {
+  // Utiliser la date actuelle au lieu de la date de l'appel original
+  const now = new Date();
+  const dateIso = now.toISOString();
+  const dateYMD = now.toISOString().split('T')[0];
+  
+  // Extraire les heures de l'appel original
+  const originalStart = new Date(slot.start_time);
+  const originalEnd = new Date(slot.end_time);
+  
+  const startHours = originalStart.getHours().toString().padStart(2, '0');
+  const startMinutes = originalStart.getMinutes().toString().padStart(2, '0');
+  const endHours = originalEnd.getHours().toString().padStart(2, '0');
+  const endMinutes = originalEnd.getMinutes().toString().padStart(2, '0');
+  
+  // Créer les nouvelles dates avec les heures originales mais la date d'aujourd'hui
+  const startIso = new Date(`${dateYMD}T${startHours}:${startMinutes}:00`).toISOString();
+  const endIso = new Date(`${dateYMD}T${endHours}:${endMinutes}:00`).toISOString();
+
+  router.push({
+    name: 'CallPage', 
+    params: {
+      groupId: slot.group_id || slot.slot_group?.id,
+      groupName: slot.slot_group?.name,
+      courseName: slot.slot_session_type?.session_type_course_material?.name,
+      sessionTypeName: slot.slot_session_type?.sessionTypeGlobal?.name, 
+      sessionTypeGlobalId: slot.slot_session_type?.sessionTypeGlobal?.id, 
+      date: dateIso,
+      startTime: startIso,
+      endTime: endIso
+    }
+  });
+}
 </script>
 
 <style scoped>
 @import url("../shared/shared.css");
 
+.dashboard-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .week-calls-sidebar {
+    max-height: 500px;
+  }
+}
+
 .dashboard-container {
-  max-width: 800px;
-  margin: 2rem auto;
+  max-width: 100%;
+  margin: 0;
+}
+
+.week-calls-sidebar {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  position: sticky;
+  top: 2rem;
+}
+
+.week-calls-sidebar h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.week-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.week-slot-item {
+  background: white;
+  border-left: 4px solid #FF8C00;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.week-slot-item:hover {
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: translateX(2px);
+}
+
+.week-slot-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.week-slot-info {
+  margin-bottom: 0.5rem;
+}
+
+.week-slot-info strong {
+  color: #254e70ff;
+  font-size: 0.95rem;
+}
+
+.week-slot-time {
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.professor-name {
+  color: #666;
+  font-style: italic;
 }
 
 .create-call-section {

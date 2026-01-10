@@ -2,7 +2,7 @@
   <div class="dashboard-wrapper">
     <!-- Colonne gauche : Contenu principal -->
     <main class="left dashboard-container">
-      <h1>Tableau de bord Professeur·e</h1>
+      <h1>Tableau de bord Professeur·e <span v-if="professorName" class="professor-name-title">- {{ professorName }}</span></h1>
       <p>Bienvenue sur votre espace de gestion des absences.</p>
 
       <div class="create-call-section">
@@ -86,8 +86,8 @@
 
     <!-- Colonne droite : Appels de la semaine -->
     <aside class="week-calls-sidebar">
-      <h2>Appels de la semaine</h2>
-      <p class="info-text">Tous les appels programmés cette semaine (partagés entre professeurs)</p>
+      <h2>Appels partagés</h2>
+      <p class="info-text">Appels de vos matières (semaine dernière et cette semaine)</p>
       
       <div v-if="weekSlots.length > 0" class="week-slots-list">
         <div v-for="slot in weekSlots" :key="slot.id" class="week-slot-item" @click="openWeekCall(slot)">
@@ -128,6 +128,7 @@ const todayCalls = ref([]);
 const weekSlots = ref([]);
 const isLoading = ref(true);
 const currentUserId = ref(null);
+const STORAGE_KEY = 'prof_preferred_subjects'; // Clé pour récupérer les matières configurées
 
 /**
  * Arrondit l'heure actuelle au quart d'heure le plus proche
@@ -185,8 +186,10 @@ function formatDate(isoString) {
 onMounted(async () => {
   try {
     const user = await getUser();
+    console.log('👤 Utilisateur récupéré:', user);
     if (user) {
       professorName.value = user.name;
+      console.log('👤 Nom du professeur défini:', professorName.value);
       currentUserId.value = user.id;
       
       const today = new Date().toISOString().split('T')[0]; // Date YYYY-MM-DD
@@ -209,8 +212,24 @@ onMounted(async () => {
       }));
 
       todayCalls.value = rawTodaySlots || [];
-      // Filtrer les appels de la semaine pour exclure ceux du professeur connecté
-      weekSlots.value = (rawWeekSlots || []).filter(slot => slot.professorId !== currentUserId.value);
+      
+      // Récupérer les matières configurées du professeur
+      const savedPreferences = localStorage.getItem(STORAGE_KEY);
+      const preferredSubjectIds = savedPreferences ? JSON.parse(savedPreferences) : [];
+      
+      // Filtrer les appels de la semaine :
+      // 1. Exclure ceux du professeur connecté
+      // 2. Ne garder que les appels des matières configurées (si des préférences existent)
+      let filteredWeekSlots = (rawWeekSlots || []).filter(slot => slot.professorId !== currentUserId.value);
+      
+      if (preferredSubjectIds.length > 0) {
+        filteredWeekSlots = filteredWeekSlots.filter(slot => {
+          const courseMaterialId = slot.slot_session_type?.session_type_course_material?.id;
+          return courseMaterialId && preferredSubjectIds.includes(courseMaterialId);
+        });
+      }
+      
+      weekSlots.value = filteredWeekSlots;
     }
   } catch (error) {
     console.error("Erreur chargement dashboard :", error);
@@ -334,6 +353,11 @@ function openWeekCall(slot) {
 .dashboard-container {
   max-width: 100%;
   margin: 0;
+}
+
+.professor-name-title {
+  color: var(--color-1, #005a8f);
+  font-weight: normal;
 }
 
 .week-calls-sidebar {

@@ -27,8 +27,12 @@ export class SlotController {
   @Get('week-slots')
   @ApiOperation({ summary: 'Récupérer tous les appels de la semaine en cours (partagés entre tous les professeurs)' })
   @ApiResponse({ status: 200, description: 'Liste des appels de la semaine' })
-  async getWeekSlots() {
-    return this.slotService.getWeekSlots();
+  async getWeekSlots(@Req() req: any) {
+    const professorId = Number(req.user?.id);
+    if (isNaN(professorId) || professorId <= 0) { 
+      throw new BadRequestException('Professor ID is missing or invalid in the token payload.');
+    }
+    return this.slotService.getWeekSlots(professorId);
   }
 
   @Get(':id')

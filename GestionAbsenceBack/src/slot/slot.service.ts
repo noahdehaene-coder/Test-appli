@@ -221,29 +221,47 @@ export class SlotService {
     return Array.from(uniqueTemplates.values());
   }
 
-  async getWeekSlots() {
+  async getWeekSlots(professorId: number) {
     const now = new Date();
     
-    // Début de la semaine (lundi à 00:00:00)
-    const startOfWeek = new Date(now);
-    const day = startOfWeek.getDay();
+    // Début de la semaine dernière (lundi d'il y a 7 jours à 00:00:00)
+    const startOfLastWeek = new Date(now);
+    const day = startOfLastWeek.getDay();
     const diff = day === 0 ? -6 : 1 - day; // Si dimanche (0), remonter à lundi précédent
-    startOfWeek.setDate(startOfWeek.getDate() + diff);
-    startOfWeek.setHours(0, 0, 0, 0);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() + diff - 7); // -7 pour la semaine dernière
+    startOfLastWeek.setHours(0, 0, 0, 0);
     
-    // Fin de la semaine (dimanche à 23:59:59)
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    // Fin de la semaine en cours (dimanche à 23:59:59)
+    const endOfThisWeek = new Date(now);
+    const dayForEnd = endOfThisWeek.getDay();
+    const diffForEnd = dayForEnd === 0 ? -6 : 1 - dayForEnd;
+    endOfThisWeek.setDate(endOfThisWeek.getDate() + diffForEnd + 6);
+    endOfThisWeek.setHours(23, 59, 59, 999);
 
-    console.log('🔍 getWeekSlots - Début de semaine:', startOfWeek);
-    console.log('🔍 getWeekSlots - Fin de semaine:', endOfWeek);
+    console.log('🔍 getWeekSlots - Début (semaine dernière):', startOfLastWeek);
+    console.log('🔍 getWeekSlots - Fin (semaine en cours):', endOfThisWeek);
+
+    // Récupérer les matières configurées du professeur
+    const professorCourseMaterials = await this.prisma.user.findUnique({
+      where: { id: professorId },
+      select: {
+        email: true,
+        // Pas de relation directe, on devra récupérer via session_type
+      }
+    });
+
+    // Récupérer tous les session_types qui correspondent aux matières du prof
+    // Note: Il faudrait avoir une table user_course_material pour faire ce lien proprement
+    // Pour l'instant, on va récupérer tous les slots et on filtrera côté front si nécessaire
 
     const slots = await this.prisma.slot.findMany({
       where: {
         date: {
-          gte: startOfWeek,
-          lte: endOfWeek,
+          gte: startOfLastWeek,
+          lte: endOfThisWeek,
+        },
+        professorId: {
+          not: professorId, // Exclure les appels du professeur connecté
         },
       },
       orderBy: [
@@ -255,7 +273,7 @@ export class SlotService {
         slot_session_type: {
           include: {
             sessionTypeGlobal: { select: { name: true, id: true } },
-            session_type_course_material: { select: { name: true } }
+            session_type_course_material: { select: { name: true, id: true } }
           }
         },
         professor: { select: { name: true, id: true } }

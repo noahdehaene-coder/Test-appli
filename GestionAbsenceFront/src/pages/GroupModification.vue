@@ -1,39 +1,5 @@
 <template>
-  <!-- Mode création de groupe -->
-  <main class="left" v-if="isNewGroup">
-    <h1>Créer un nouveau groupe</h1>
-    
-    <form @submit.prevent="createNewGroup" class="create-form">
-      <div class="form-group">
-        <label for="groupName">Nom du groupe :</label>
-        <input 
-          id="groupName" 
-          v-model="newGroupName" 
-          type="text" 
-          placeholder="Ex: Groupe A, TD1, TP2..." 
-          required
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="semester">Semestre :</label>
-        <select id="semester" v-model="newGroupSemester" required>
-          <option value="" disabled>-- Choisir un semestre --</option>
-          <option v-for="sem in allSemesters" :key="sem.id" :value="sem.id">
-            {{ sem.name }}
-          </option>
-        </select>
-      </div>
-      
-      <div class="form-actions">
-        <button type="submit" class="button">Créer le groupe</button>
-        <RouterLink to="/selection/groupe" class="button btn-cancel">Annuler</RouterLink>
-      </div>
-    </form>
-  </main>
-
-  <!-- Mode modification de groupe existant -->
-  <main class="left" v-else-if="group && semester">
+  <main class="left" v-if="group && semester">
     <div class="container">
       
       <div class="left-container">
@@ -60,15 +26,15 @@
       </div>
 
       <div class="right-container">
-        <h1>Autres étudiant·e·s</h1>
+        <h1>Autres étudiants</h1>
         
         <div class="select-container">
           <select v-model="selectedSource" @change="loadRightList" class="group-select">
             <option value="" disabled>-- Choisir une source --</option>
-            <option value="no_extra_group">Étudiant·e·s sans groupe</option>
-            <option disabled>--- Groupes de l'année ---</option>
-            <option v-for="g in baseYearGroups" :key="g.id" :value="g.id">
-              {{ g.name }}
+            <option value="no_group">Étudiants sans groupe</option>
+            <option disabled>--- Groupes du semestre ---</option>
+            <option v-for="g in sourceGroups" :key="g.id" :value="g.id">
+              Groupe {{ g.name }}
             </option>
           </select>
         </div>
@@ -84,26 +50,34 @@
           <li v-for="student in filteredStudentsInOtherGroups" :key="student.id" class="students-list">
             <div class="student-list-container">
               <div class="student-info">
-                <span class="student-name">{{ student.name }}</span>
-                <span class="student-groups" v-if="student.groupNames && student.groupNames.length > 0">
-                  {{ student.groupNames.join(', ') }}
-                </span>
-                <span class="student-groups" v-else>
-                  étudiant sans groupe
-                </span>
+                {{ student.name }}
+              </div>
+              <div class="student-group-number">
+                <p>{{ student.originalGroupName || 'Sans groupe' }}</p>
               </div>
             </div>
             
-            <button 
-              @click="addStudent(student)" 
-              class="button add-btn" 
-              title="Ajouter au groupe"
-            >
-              +
-            </button>
+            <div class="action-buttons">
+              <button 
+                @click="addStudent(student, false)" 
+                class="button add-btn" 
+                title="Ajouter (L'étudiant sera dans les deux groupes)"
+              >
+                +
+              </button>
+
+              <button 
+                v-if="student.originalGroupId" 
+                @click="addStudent(student, true)" 
+                class="button move-btn" 
+                title="Déplacer (Quitte ce groupe)"
+              >
+                ←
+              </button>
+            </div>
           </li>
           <li v-if="filteredStudentsInOtherGroups.length === 0 && selectedSource" class="empty-msg">
-            Aucun·e étudiant·e disponible dans cette source.
+            Aucun étudiant disponible dans cette source.
           </li>
         </ul>
       </div>
@@ -113,30 +87,22 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import SearchIcon from '@/shared/assets/icon/SearchIcon.vue';
 
-import { getGroupById, getAllGroupsBySemester, postGroupWithSemesterName, getGroupsByStudentId } from '../shared/fetchers/groups';
+import { getGroupById, getAllGroupsBySemester } from '../shared/fetchers/groups';
 import { getStudentsByGroupId, getStudents } from '../shared/fetchers/students';
-import { getSemesterById, getAllSemesters } from '../shared/fetchers/semesters';
+import { getSemesterById } from '../shared/fetchers/semesters';
 import { postInscription, deleteInscriptionById, putInscriptionAndDeleteOldInscription, getInscriptions } from '../shared/fetchers/inscriptions';
 
 const route = useRoute();
-const router = useRouter();
-const currentGroupId = parseInt(route.params.id);
-const isNewGroup = computed(() => currentGroupId === 0);
+const currentGroupId = route.params.id;
 
 const group = ref(null);
 const semester = ref(null);
 const studentsInGroup = ref([]);
 
-// Pour la création de groupe
-const allSemesters = ref([]);
-const newGroupName = ref('');
-const newGroupSemester = ref('');
-
 const sourceGroups = ref([]);
-const baseYearGroups = ref([]);
 const selectedSource = ref('');
 const studentsInRightList = ref([]);
 const loadingRight = ref(false);
@@ -145,31 +111,8 @@ const searchQuery1 = ref('');
 const searchQuery2 = ref('');
 
 onMounted(async () => {
-  if (isNewGroup.value) {
-    allSemesters.value = await getAllSemesters();
-  } else {
-    await loadMainData();
-  }
+  await loadMainData();
 });
-
-async function createNewGroup() {
-  if (!newGroupName.value.trim() || !newGroupSemester.value) {
-    alert("Veuillez remplir tous les champs.");
-    return;
-  }
-  
-  try {
-    const semester = allSemesters.value.find(s => s.id === parseInt(newGroupSemester.value));
-    const semesterName = semester ? semester.name : '';
-    
-    const createdGroup = await postGroupWithSemesterName(semesterName, newGroupName.value);
-    alert(`✅ Groupe "${newGroupName.value}" créé avec succès !`);
-    router.push(`/modification/groupe/${createdGroup.id}`);
-  } catch (error) {
-    console.error("Erreur lors de la création du groupe:", error);
-    alert("❌ Erreur : " + (error.message || "Impossible de créer le groupe"));
-  }
-}
 
 async function loadMainData() {
   if (!currentGroupId) return;
@@ -183,12 +126,6 @@ async function loadMainData() {
 
     const allGroupsInSemester = await getAllGroupsBySemester(group.value.semester_id);
     sourceGroups.value = allGroupsInSemester.filter(g => g.id !== parseInt(currentGroupId));
-    
-    // Groupes de base de l'année (L1S1, L1S2, etc.)
-    const excludedGroupNames = ['L1S1', 'L1S2', 'L2S3', 'L2S4', 'L3S5', 'L3S6'];
-    baseYearGroups.value = allGroupsInSemester.filter(g => 
-      excludedGroupNames.includes(g.name) && g.id !== parseInt(currentGroupId)
-    );
 
     if (selectedSource.value) {
       await loadRightList();
@@ -208,60 +145,31 @@ async function loadRightList() {
 
   try {
     let rawStudents = [];
-    
-    if (selectedSource.value === 'no_extra_group') {
-      // Étudiants sans groupe supplémentaire (seulement dans les groupes de base)
-      const [allInscriptions, allStudents] = await Promise.all([
-        getInscriptions(),
-        getStudents()
+    let groupInfo = null;
+
+    if (selectedSource.value === 'no_group') {
+      const [allStudents, allInscriptions] = await Promise.all([
+        getStudents(),
+        getInscriptions()
       ]);
       
-      const excludedGroupNames = ['L1S1', 'L1S2', 'L2S3', 'L2S4', 'L3S5', 'L3S6'];
-      const baseGroupIds = sourceGroups.value
-        .filter(g => excludedGroupNames.includes(g.name))
-        .map(g => g.id);
-      
-      // Trouver les étudiants qui n'ont des inscriptions QUE dans les groupes de base
-      const studentGroupCounts = {};
-      allInscriptions.forEach(ins => {
-        if (!studentGroupCounts[ins.student_id]) {
-          studentGroupCounts[ins.student_id] = { base: 0, other: 0 };
-        }
-        if (baseGroupIds.includes(ins.group_id)) {
-          studentGroupCounts[ins.student_id].base++;
-        } else {
-          studentGroupCounts[ins.student_id].other++;
-        }
-      });
-      
-      const studentIdsOnlyBase = Object.keys(studentGroupCounts)
-        .filter(id => studentGroupCounts[id].other === 0)
-        .map(id => parseInt(id));
-      
-      rawStudents = allStudents.filter(s => studentIdsOnlyBase.includes(s.id));
+      const studentIdsWithGroup = new Set(allInscriptions.map(i => i.student_id));
+      rawStudents = allStudents.filter(s => !studentIdsWithGroup.has(s.id));
       
     } else {
-      // Groupe spécifique
       const groupId = selectedSource.value;
+      const sourceGroup = sourceGroups.value.find(g => g.id == groupId);
+      if (sourceGroup) groupInfo = { id: sourceGroup.id, name: sourceGroup.name };
+      
       rawStudents = await getStudentsByGroupId(groupId);
     }
-    
-    // Enrichir avec les groupes de chaque étudiant
-    const studentsWithGroups = await Promise.all(
-      rawStudents.map(async (s) => {
-        const groups = await getGroupsByStudentId(s.id);
-        const excludedNames = ['L1S1', 'L1S2', 'L2S3', 'L2S4', 'L3S5', 'L3S6'];
-        const extraGroups = groups.filter(g => !excludedNames.includes(g.name));
-        
-        return {
-          ...s,
-          name: s.name,
-          groupNames: extraGroups.map(g => g.name)
-        };
-      })
-    );
-    
-    studentsInRightList.value = studentsWithGroups;
+
+    studentsInRightList.value = rawStudents.map(s => ({
+      ...s,
+      name: s.name,
+      originalGroupId: groupInfo ? groupInfo.id : null,
+      originalGroupName: groupInfo ? groupInfo.name : null
+    }));
 
   } catch (error) {
     console.error("Erreur chargement liste droite:", error);
@@ -272,20 +180,18 @@ async function loadRightList() {
 
 
 const filteredStudentsInGroup = computed(() => {
-  return studentsInGroup.value
-    .filter(s => s.name.toLowerCase().includes(searchQuery1.value.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return studentsInGroup.value.filter(s => 
+    s.name.toLowerCase().includes(searchQuery1.value.toLowerCase())
+  );
 });
 
 const filteredStudentsInOtherGroups = computed(() => {
   const currentMemberIds = new Set(studentsInGroup.value.map(s => s.id));
 
-  return studentsInRightList.value
-    .filter(s => {
-      if (currentMemberIds.has(s.id)) return false;
-      return s.name.toLowerCase().includes(searchQuery2.value.toLowerCase());
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return studentsInRightList.value.filter(s => {
+    if (currentMemberIds.has(s.id)) return false;
+    return s.name.toLowerCase().includes(searchQuery2.value.toLowerCase());
+  });
 });
 
 
@@ -300,14 +206,23 @@ async function deleteStudent(student) {
   }
 }
 
+async function addStudent(student, isMove) {
+  let msg = isMove 
+    ? `DÉPLACER ${student.name} de ${student.originalGroupName} vers ${group.value.name} ?`
+    : `AJOUTER ${student.name} à ${group.value.name} ?`;
+  
+  if (!confirm(msg)) return;
 
-async function addStudent(student) {
   try {
-    await postInscription(student.id, currentGroupId);
+    if (isMove && student.originalGroupId) {
+      await putInscriptionAndDeleteOldInscription(student.id, student.originalGroupId, currentGroupId);
+    } else {
+      await postInscription(student.id, currentGroupId);
+    }
     await loadMainData();
   } catch (e) {
     console.error(e);
-    alert("❌ Erreur lors de l'ajout de l'étudiant·e.");
+    alert("Erreur opération.");
   }
 }
 </script>
@@ -368,21 +283,7 @@ async function addStudent(student) {
 }
 
 .student-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
-}
-
-.student-name {
   font-weight: bold;
-  font-size: 1.15rem;
-}
-
-.student-groups {
-  font-size: 0.8rem;
-  color: #888;
-  align-self: flex-start;
 }
 
 .student-group-number {
@@ -452,54 +353,5 @@ async function addStudent(student) {
   color: black;
   font-size: 1rem;
   margin-bottom: 0rem;
-}
-
-/* Styles pour le formulaire de création */
-.create-form {
-  max-width: 500px;
-  padding: 2rem;
-  background-color: var(--color-6);
-  border-radius: 8px;
-  border: 2px solid var(--color-3);
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: var(--color-2);
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: 2px solid var(--color-3);
-  border-radius: 5px;
-  box-sizing: border-box;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.form-actions .button {
-  width: auto;
-  padding: 0.75rem 1.5rem;
-  height: auto;
-}
-
-.btn-cancel {
-  background-color: var(--color-7) !important;
-  color: white;
-  text-decoration: none;
-  display: inline-block;
 }
 </style>

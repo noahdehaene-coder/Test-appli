@@ -90,7 +90,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import SearchIcon from '@/shared/assets/icon/SearchIcon.vue';
 
-import { getGroupById, getAllGroupsBySemester } from '../shared/fetchers/groups';
+import { getGroupById, getAllGroupsBySemester, getGroups } from '../shared/fetchers/groups';
 import { getStudentsByGroupId, getStudents } from '../shared/fetchers/students';
 import { getSemesterById } from '../shared/fetchers/semesters';
 import { postInscription, deleteInscriptionById, putInscriptionAndDeleteOldInscription, getInscriptions } from '../shared/fetchers/inscriptions';
@@ -110,6 +110,9 @@ const loadingRight = ref(false);
 const searchQuery1 = ref('');
 const searchQuery2 = ref('');
 
+// Groupes "administratifs" à exclure du filtre "sans groupe"
+const excludedGroups = ['L1S1', 'L1S2', 'L2S3', 'L2S4', 'L3S5', 'L3S6'];
+
 onMounted(async () => {
   await loadMainData();
 });
@@ -124,7 +127,10 @@ async function loadMainData() {
     const studentsIn = await getStudentsByGroupId(currentGroupId);
     studentsInGroup.value = studentsIn.map(s => ({ ...s, name: s.name }));
 
-    const allGroupsInSemester = await getAllGroupsBySemester(group.value.semester_id);
+    // Convertir semester_id (1-6) en année (1-3)
+    // S1,S2 -> année 1 | S3,S4 -> année 2 | S5,S6 -> année 3
+    const year = Math.ceil(group.value.semester_id / 2);
+    const allGroupsInSemester = await getAllGroupsBySemester(year);
     sourceGroups.value = allGroupsInSemester.filter(g => g.id !== parseInt(currentGroupId));
 
     if (selectedSource.value) {
@@ -148,13 +154,23 @@ async function loadRightList() {
     let groupInfo = null;
 
     if (selectedSource.value === 'no_group') {
-      const [allStudents, allInscriptions] = await Promise.all([
+      const [allStudents, allInscriptions, allGroups] = await Promise.all([
         getStudents(),
-        getInscriptions()
+        getInscriptions(),
+        getGroups()
       ]);
       
-      const studentIdsWithGroup = new Set(allInscriptions.map(i => i.student_id));
-      rawStudents = allStudents.filter(s => !studentIdsWithGroup.has(s.id));
+      // Créer une map des noms de groupes par ID
+      const groupNameMap = new Map(allGroups.map(g => [g.id, g.name]));
+      
+      // Filtrer les inscriptions qui ne sont PAS dans des groupes administratifs
+      const realInscriptions = allInscriptions.filter(i => {
+        const groupName = groupNameMap.get(i.group_id);
+        return groupName && !excludedGroups.includes(groupName);
+      });
+      
+      const studentIdsWithRealGroup = new Set(realInscriptions.map(i => i.student_id));
+      rawStudents = allStudents.filter(s => !studentIdsWithRealGroup.has(s.id));
       
     } else {
       const groupId = selectedSource.value;

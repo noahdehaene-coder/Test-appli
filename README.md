@@ -1,5 +1,5 @@
 # Absence Management
-**This is a L3 MIASHS project by three students.**
+**This is a development project initiated by three students during the 2024-2025 academic year and then continued by two other students during the 2025-2026 academic year.**
 
 It consists in designing a web application for teachers and school administrators, so that they can manage the absences of undergraduate students.
 

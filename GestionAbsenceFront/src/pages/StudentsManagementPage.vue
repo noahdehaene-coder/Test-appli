@@ -3,7 +3,7 @@
     <main class="left">
 
         <div class="header-section">
-            <h1>Liste des étudiant.e.s</h1>
+            <h1>Création des classes</h1>
 
             <div>
                 <button class="button" id="refresh-ade-btn" @click="refreshADE">Supprimer les matières</button>

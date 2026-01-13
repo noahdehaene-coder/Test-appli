@@ -1,9 +1,16 @@
 <template>
   <main class="left" v-if="group && semester">
+    <div class="header-with-delete">
+      <h1>Modification du groupe {{ group.name }}</h1>
+      <button @click="deleteGroup" class="button delete-group-btn" title="Supprimer ce groupe">
+        Supprimer le groupe
+      </button>
+    </div>
+    
     <div class="container">
       
       <div class="left-container">
-        <h1>Membres de {{ group.name }}</h1>
+        <h2>Membres de {{ group.name }}</h2>
         <div class="search-container">
           <SearchIcon class="search-icon" />
           <input class="search-bar" type="search" v-model="searchQuery1" placeholder="Filtrer la liste..." />
@@ -87,15 +94,16 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import SearchIcon from '@/shared/assets/icon/SearchIcon.vue';
 
-import { getGroupById, getAllGroupsBySemester, getGroups } from '../shared/fetchers/groups';
+import { getGroupById, getAllGroupsBySemester, getGroups, deleteGroupById } from '../shared/fetchers/groups';
 import { getStudentsByGroupId, getStudents } from '../shared/fetchers/students';
 import { getSemesterById } from '../shared/fetchers/semesters';
 import { postInscription, deleteInscriptionById, putInscriptionAndDeleteOldInscription, getInscriptions } from '../shared/fetchers/inscriptions';
 
 const route = useRoute();
+const router = useRouter();
 const currentGroupId = route.params.id;
 
 const group = ref(null);
@@ -245,10 +253,58 @@ async function addStudent(student, isMove) {
     alert("Erreur opération.");
   }
 }
+
+async function deleteGroup() {
+  const confirmMsg = `⚠️ ATTENTION : Supprimer le groupe "${group.value.name}" ?\n\nCette action est irréversible et supprimera toutes les inscriptions des étudiants à ce groupe.`;
+  
+  if (!confirm(confirmMsg)) return;
+  
+  try {
+    await deleteGroupById(currentGroupId);
+    alert(`Le groupe "${group.value.name}" a été supprimé avec succès.`);
+    router.push({ name: 'SelectGroupModification' });
+  } catch (e) {
+    console.error(e);
+    alert("Erreur lors de la suppression du groupe.");
+  }
+}
 </script>
 
 <style scoped>
 @import url("../shared/shared.css");
+
+.header-with-delete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.header-with-delete h1 {
+  margin: 0;
+}
+
+.delete-group-btn {
+  background-color: #dc2626;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  border: none;
+  border-radius: 5px;
+  width: auto !important;
+  min-width: fit-content;
+  display: inline-block;
+}
+
+.delete-group-btn:hover {
+  background-color: #b91c1c;
+}
 
 .container {
   display: grid;

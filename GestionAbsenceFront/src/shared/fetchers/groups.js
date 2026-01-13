@@ -150,3 +150,22 @@ export async function deleteGroups() {
         throw error;
     }
 }
+
+/**
+ * Supprime un groupe par son ID.
+ */
+export async function deleteGroupById(groupId) {
+    try {
+        const response = await fetch(`http://localhost:3000/group/${groupId}`, {
+            method: "DELETE",
+            headers: getAuthHeader()
+        });
+        if (!response.ok) {
+            throw new Error("Erreur lors de la suppression du groupe");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Erreur lors de la suppression du groupe:", error);
+        throw error;
+    }
+}

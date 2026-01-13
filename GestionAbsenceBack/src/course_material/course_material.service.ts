@@ -90,7 +90,51 @@ export class CourseMaterialService {
       },
     });
 
-    return absences.map((a) => ({
+    // Get all slots for all courses to find which ones this student attended (not marked absent)
+    const allSlots = await this.prisma.slot.findMany({
+      select: {
+        id: true,
+        date: true,
+        slot_session_type: {
+          select: {
+            session_type_course_material: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Get all presences for this student (all absences)
+    const studentPresences = await this.prisma.presence.findMany({
+      where: { student_id: studentId },
+      select: { slot_id: true },
+    });
+
+    const absentSlotIds = new Set(studentPresences.map((p) => p.slot_id));
+
+    // Build a set of "date + courseId" pairs where student attended at least one session
+    // (a student attended a slot if they're NOT in the presence table)
+    const attendedSameDayCourses = new Set<string>();
+    allSlots.forEach((slot) => {
+      if (!absentSlotIds.has(slot.id)) {
+        const dateStr = new Date(slot.date).toISOString().split('T')[0];
+        const courseId = slot.slot_session_type.session_type_course_material.id;
+        attendedSameDayCourses.add(`${dateStr}|${courseId}`);
+      }
+    });
+
+    // Filter absences: exclude if student attended same course same day
+    const filteredAbsences = absences.filter((a) => {
+      const dateStr = new Date(a.presence_slot.date).toISOString().split('T')[0];
+      const courseId = a.presence_slot.slot_session_type.session_type_course_material.id;
+      const key = `${dateStr}|${courseId}`;
+      return !attendedSameDayCourses.has(key);
+    });
+
+    return filteredAbsences.map((a) => ({
       course_material: a.presence_slot.slot_session_type.session_type_course_material.name,
       session_type: a.presence_slot.slot_session_type.sessionTypeGlobal.name,
       

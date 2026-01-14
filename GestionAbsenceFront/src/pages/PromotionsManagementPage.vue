@@ -156,6 +156,7 @@ const executePromotion = async () => {
     }
 
     successMessage.value = data.message;
+    alert('✓ ' + data.message);
     setTimeout(() => {
       successMessage.value = '';
     }, 5000);

@@ -183,7 +183,7 @@ const executePromotion = async () => {
 }
 
 h2 {
-  color: var(--color-1, #005a8f);
+  color: black;
   margin-bottom: 1rem;
   font-size: 1.8rem;
 }
@@ -203,7 +203,7 @@ h2 {
 }
 
 .section h3 {
-  color: var(--color-1, #005a8f);
+  color: black;
   margin-bottom: 0.5rem;
   font-size: 1.3rem;
 }
@@ -238,7 +238,7 @@ h2 {
 }
 
 .promotion-card h4 {
-  color: var(--color-1, #005a8f);
+  color: black;
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
 }

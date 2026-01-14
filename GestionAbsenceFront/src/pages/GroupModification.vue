@@ -224,17 +224,34 @@ async function loadRightList() {
         getGroups()
       ]);
       
-      // Créer une map des noms de groupes par ID
-      const groupNameMap = new Map(allGroups.map(g => [g.id, g.name]));
-      
-      // Filtrer les inscriptions qui ne sont PAS dans des groupes administratifs
-      const realInscriptions = allInscriptions.filter(i => {
-        const groupName = groupNameMap.get(i.group_id);
-        return groupName && !excludedGroups.includes(groupName);
-      });
-      
-      const studentIdsWithRealGroup = new Set(realInscriptions.map(i => i.student_id));
-      rawStudents = allStudents.filter(s => !studentIdsWithRealGroup.has(s.id));
+      const targetSemesterId = group.value?.semester_id;
+
+      // Récupérer les groupes administratifs du semestre cible
+      const adminGroupsInSemester = allGroups.filter(g =>
+        g.semester_id === targetSemesterId && excludedGroups.includes(g.name)
+      );
+
+      // Récupérer tous les étudiants inscrits dans les groupes admin (ils appartiennent à ce semestre)
+      const adminInscriptions = allInscriptions.filter(i =>
+        adminGroupsInSemester.some(g => g.id === i.group_id)
+      );
+      const studentIdsInThisSemester = new Set(adminInscriptions.map(i => i.student_id));
+
+      // Récupérer les groupes non-administratifs du semestre cible
+      const nonAdminGroupsInSemester = allGroups.filter(g =>
+        g.semester_id === targetSemesterId && !excludedGroups.includes(g.name)
+      );
+
+      // Récupérer les étudiants avec un groupe non-admin dans ce semestre
+      const nonAdminInscriptions = allInscriptions.filter(i =>
+        nonAdminGroupsInSemester.some(g => g.id === i.group_id)
+      );
+      const studentIdsWithRealGroup = new Set(nonAdminInscriptions.map(i => i.student_id));
+
+      // Étudiants du semestre sans groupe non-administratif
+      rawStudents = allStudents.filter(s =>
+        studentIdsInThisSemester.has(s.id) && !studentIdsWithRealGroup.has(s.id)
+      );
       
     } else {
       const groupId = selectedSource.value;

@@ -13,10 +13,11 @@ import { CsvModule } from './csv/csv.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ProfessorPreferenceModule } from './professor_preference/professor_preference.module';
+import { PromotionModule } from './promotion/promotion.module';
 
 
 @Module({
-  imports: [StudentModule, SlotModule, SemesterModule, SessionTypeModule, PresenceModule, InscriptionModule, GroupModule, CourseMaterialModule, CsvModule, AuthModule, UserModule, ProfessorPreferenceModule],
+  imports: [StudentModule, SlotModule, SemesterModule, SessionTypeModule, PresenceModule, InscriptionModule, GroupModule, CourseMaterialModule, CsvModule, AuthModule, UserModule, ProfessorPreferenceModule, PromotionModule],
   controllers: [AppController],
   providers: [AppService],
 })

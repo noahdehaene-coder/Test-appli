@@ -16,6 +16,7 @@ import StudentModification from './pages/StudentModification.vue';
 import CourseSummaryPage from './pages/CourseSummaryPage.vue';
 import StudentSummaryPage from './pages/StudentSummaryPage.vue';
 import MyAbsencesPage from './pages/MyAbsencesPage.vue';
+import PromotionsManagementPage from './pages/PromotionsManagementPage.vue';
 
 const routes = [
   {
@@ -104,6 +105,11 @@ const routes = [
          path: '/modification/etudiant/:id',
          name: 'StudentModification',
          component: StudentModification
+       },
+       {
+         path: 'manage-promotions',
+         name: 'PromotionsManagement',
+         component: PromotionsManagementPage
        },
     ]
   },

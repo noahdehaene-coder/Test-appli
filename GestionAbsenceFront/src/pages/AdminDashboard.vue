@@ -10,6 +10,9 @@
       <router-link :to="{ name: 'StudentsManagement' }">
         Gérer les Étudiant·e·s
       </router-link>
+      <router-link :to="{ name: 'PromotionsManagement' }">
+        Gérer les Promotions
+      </router-link>
       </nav>
     
     <div class="admin-content">

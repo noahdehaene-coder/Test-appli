@@ -125,4 +125,32 @@ const filteredGroupsL3 = computed(() =>
 .btn-add:active {
   transform: translateY(1px);
 }
+
+@media (max-width: 900px) {
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .btn-add {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .sections-container {
+    flex-direction: column;
+    height: auto;
+    gap: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .section {
+    width: 100%;
+    height: 400px;
+    box-sizing: border-box;
+  }
+}
 </style>

@@ -619,4 +619,37 @@ async function deleteGroup() {
   font-size: 1rem;
   margin-bottom: 0rem;
 }
+
+@media (max-width: 900px) {
+
+  .header-with-delete {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .delete-group-btn {
+    width: 100% !important;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .group-select, 
+  .search-container, 
+  .list {
+    width: 100%;
+  }
+
+  /* Adaptation du formulaire de création */
+  .creation-form {
+    width: 100%;
+    padding: 1rem;
+  }
+}
 </style>

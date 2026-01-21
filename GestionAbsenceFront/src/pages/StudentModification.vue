@@ -288,6 +288,45 @@ select {
 }
 
 .btn-delete:hover {
-    background-color: #c82333; /* Rouge plus foncé au survol */
+    background-color: #c82333;
+}
+
+@media (max-width: 900px) {
+    
+    .page-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    .left-column, .right-column {
+        width: 100%;
+    }
+
+    .container div {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    label {
+        margin-bottom: 0.2rem;
+    }
+
+    input, select {
+        margin-left: 0;
+        align-items: stretch;
+    }
+
+    .search-container {
+        width: 100%;
+    }
+
+    .list-groups {
+        width: 100%;
+        max-height: 300px;
+    }
+
+    
 }
 </style>

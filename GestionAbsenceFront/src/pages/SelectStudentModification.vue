@@ -300,11 +300,11 @@ function filterList(list, query) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  padding-right: 1rem; /* Petit espace à droite pour ne pas coller au bord */
+  padding-right: 1rem;
 }
 
 .btn-add {
-  background-color: var(--color-2); /* Utilise la couleur de vos badges */
+  background-color: var(--color-2);
   color: white;
   padding: 0.6rem 1.2rem;
   text-decoration: none;
@@ -316,10 +316,39 @@ function filterList(list, query) {
 
 .btn-add:hover {
   opacity: 0.9;
-  background-color: var(--color-1); /* Optionnel : change un peu la couleur au survol */
+  background-color: var(--color-1);
 }
 
 .btn-add:active {
   transform: translateY(1px);
+}
+
+@media (max-width: 900px) {
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .btn-add {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .sections-container {
+    flex-direction: column;
+    height: auto;
+    gap: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .section {
+    width: 100%;
+    height: 400px; 
+    box-sizing: border-box;
+  }
+
 }
 </style>
